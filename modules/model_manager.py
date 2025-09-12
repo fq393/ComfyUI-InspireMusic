@@ -11,7 +11,7 @@ class InspireMusicModelManager:
     Manages InspireMusic model loading and configuration.
     """
     
-    def __init__(self, model_base_path: str = "../models/InspireMusic"):
+    def __init__(self, model_base_path: str = "../../models/InspireMusic"):
         self.model_base_path = Path(model_base_path)
         self.loaded_models = {}
         self.device = self._get_device()
