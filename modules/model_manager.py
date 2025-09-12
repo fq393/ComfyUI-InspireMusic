@@ -34,7 +34,9 @@ class InspireMusicModelManager:
         """
         models = {}
         
+        print(f"[DEBUG] Checking model base path: {self.model_base_path.resolve()}")
         if not self.model_base_path.exists():
+            print(f"[DEBUG] Model base path does not exist: {self.model_base_path.resolve()}")
             return models
             
         # Common InspireMusic model names
@@ -48,8 +50,12 @@ class InspireMusicModelManager:
         
         for model_name in model_names:
             model_path = self.model_base_path / model_name
+            print(f"[DEBUG] Checking model path: {model_path.resolve()}")
             if model_path.exists():
+                print(f"[DEBUG] Found model: {model_name} at {model_path}")
                 models[model_name] = str(model_path)
+            else:
+                print(f"[DEBUG] Model not found: {model_name} at {model_path}")
                 
         return models
         
@@ -179,8 +185,14 @@ class InspireMusicModelManager:
             return self.loaded_models[cache_key]
             
         # Get model information
+        print(f"[DEBUG] Looking for model: {model_name}")
+        print(f"[DEBUG] Model base path: {self.model_base_path.resolve()}")
+        
         model_info = self.get_model_info(model_name)
+        print(f"[DEBUG] Model info: {model_info}")
+        
         if not model_info or not model_info.get('valid', False):
+            print(f"[DEBUG] Available models: {list(self.get_available_models().keys())}")
             raise ValueError(f"Model {model_name} not found or invalid")
             
         model_path = model_info['path']
