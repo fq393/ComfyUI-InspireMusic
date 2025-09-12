@@ -159,6 +159,54 @@ class InspireMusicModelManager:
             "device": self.device
         }
         
+    def load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000):
+        """
+        Load an InspireMusic model.
+        
+        Args:
+            model_name: Name of the model to load
+            fast_mode: Whether to use fast inference mode
+            output_sample_rate: Target sample rate for output
+            
+        Returns:
+            Loaded InspireMusic model instance
+        """
+        from inspiremusic.cli.inference import InspireMusicModel
+        
+        # Check if model is already loaded
+        cache_key = f"{model_name}_{fast_mode}_{output_sample_rate}"
+        if cache_key in self.loaded_models:
+            return self.loaded_models[cache_key]
+            
+        # Get model information
+        model_info = self.get_model_info(model_name)
+        if not model_info or not model_info.get('valid', False):
+            raise ValueError(f"Model {model_name} not found or invalid")
+            
+        model_path = model_info['path']
+        config_path = model_info['config']
+        
+        if not config_path:
+            raise ValueError(f"Configuration file not found for model {model_name}")
+            
+        try:
+            # Load the model using InspireMusic's inference interface
+            model = InspireMusicModel(
+                model_name=model_name,
+                model_dir=model_path,
+                output_sample_rate=output_sample_rate,
+                fast=fast_mode,
+                gpu=0 if self.device == 'cuda' else -1
+            )
+            
+            # Cache the loaded model
+            self.loaded_models[cache_key] = model
+            
+            return model
+            
+        except Exception as e:
+            raise RuntimeError(f"Failed to load model {model_name}: {str(e)}")
+    
     def clear_cache(self):
         """
         Clear loaded model cache.

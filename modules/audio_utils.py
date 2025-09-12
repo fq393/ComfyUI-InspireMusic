@@ -54,7 +54,7 @@ def save_audio(audio: torch.Tensor, file_path: str, sample_rate: int = 24000) ->
     except Exception as e:
         raise RuntimeError(f"Failed to save audio to {file_path}: {str(e)}")
 
-def apply_fade_out(audio: torch.Tensor, fade_duration: float = 2.0, sample_rate: int = 24000) -> torch.Tensor:
+def apply_fade_out(audio: torch.Tensor, sample_rate: int = 24000, fade_duration: float = 2.0) -> torch.Tensor:
     """
     Apply fade out effect to audio.
     

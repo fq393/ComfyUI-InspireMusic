@@ -170,7 +170,7 @@ class InspireMusicTextToMusicNode:
             time_end = min(duration_max, max(duration_min, duration_max))
             
             # Generate music using the CLI interface
-            result = model.inference(
+            output_file = model.inference(
                 task=task_type,
                 text=text_prompt,
                 audio_prompt=audio_prompt_path,
@@ -183,8 +183,18 @@ class InspireMusicTextToMusicNode:
                 trim=trim_silence
             )
             
-            # Extract generated audio
-            generated_audio = result['audio']
+            # Load the generated audio file
+            if output_file and os.path.exists(output_file):
+                generated_audio, _ = load_audio(output_file, target_sr=output_sample_rate)
+                generated_audio = generated_audio.squeeze(0)  # Remove channel dimension
+                
+                # Clean up the temporary output file
+                try:
+                    os.unlink(output_file)
+                except:
+                    pass
+            else:
+                raise RuntimeError("Failed to generate audio file")
             
             # Clean up temporary audio prompt file
             if audio_prompt_path and os.path.exists(audio_prompt_path):
@@ -195,10 +205,11 @@ class InspireMusicTextToMusicNode:
             
             # Post-processing
             if fade_out:
-                generated_audio = apply_fade_out(generated_audio, output_sample_rate, fade_duration=fade_out_duration)
+                generated_audio = apply_fade_out(generated_audio, sample_rate=output_sample_rate, fade_duration=fade_out_duration)
             
             if trim_silence:
-                generated_audio = trim_silence(generated_audio)
+                from ..modules.audio_utils import trim_silence as trim_silence_func
+                generated_audio = trim_silence_func(generated_audio, sample_rate=output_sample_rate)
             
             # Convert to ComfyUI audio format
             audio_output = convert_to_comfyui_audio(generated_audio, output_sample_rate)
