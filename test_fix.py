@@ -25,8 +25,25 @@ def test_path_detection():
         print(f"\nTesting path: {current_dir}")
         
         if "custom_nodes" in str(current_dir):
-            comfyui_root = current_dir.parent.parent
-            model_base_path = comfyui_root / "models" / "InspireMusic"
+            # Navigate up to ComfyUI root and find models
+            # current_dir is like: /data/ComfyUI/custom_nodes/ComfyUI-InspireMusic/modules
+            # We need to go up to /data/ComfyUI/
+            # Find the custom_nodes part and go up from there
+            path_parts = current_dir.parts
+            custom_nodes_index = None
+            for i, part in enumerate(path_parts):
+                if part == "custom_nodes":
+                    custom_nodes_index = i
+                    break
+            
+            if custom_nodes_index is not None:
+                # Reconstruct path up to ComfyUI root (before custom_nodes)
+                comfyui_root = Path(*path_parts[:custom_nodes_index])
+                model_base_path = comfyui_root / "models" / "InspireMusic"
+            else:
+                # Fallback if we can't find custom_nodes in path
+                comfyui_root = current_dir.parent.parent.parent
+                model_base_path = comfyui_root / "models" / "InspireMusic"
             print(f"  ComfyUI structure detected")
             print(f"  ComfyUI root: {comfyui_root}")
             print(f"  Model path: {model_base_path}")

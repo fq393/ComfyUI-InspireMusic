@@ -25,8 +25,24 @@ class InspireMusicModelManager:
             # Check if we're in custom_nodes/ComfyUI-InspireMusic structure
             if "custom_nodes" in str(current_dir):
                 # Navigate up to ComfyUI root and find models
-                comfyui_root = current_dir.parent.parent
-                model_base_path = comfyui_root / "models" / "InspireMusic"
+                # current_dir is like: /data/ComfyUI/custom_nodes/ComfyUI-InspireMusic/modules
+                # We need to go up to /data/ComfyUI/
+                # Find the custom_nodes part and go up from there
+                path_parts = current_dir.parts
+                custom_nodes_index = None
+                for i, part in enumerate(path_parts):
+                    if part == "custom_nodes":
+                        custom_nodes_index = i
+                        break
+                
+                if custom_nodes_index is not None:
+                    # Reconstruct path up to ComfyUI root (before custom_nodes)
+                    comfyui_root = Path(*path_parts[:custom_nodes_index])
+                    model_base_path = comfyui_root / "models" / "InspireMusic"
+                else:
+                    # Fallback if we can't find custom_nodes in path
+                    comfyui_root = current_dir.parent.parent
+                    model_base_path = comfyui_root / "models" / "InspireMusic"
             else:
                 # Fallback to relative path
                 model_base_path = current_dir.parent / "models" / "InspireMusic"
