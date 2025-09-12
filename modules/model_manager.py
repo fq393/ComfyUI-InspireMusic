@@ -11,7 +11,26 @@ class InspireMusicModelManager:
     Manages InspireMusic model loading and configuration.
     """
     
-    def __init__(self, model_base_path: str = "../../models/InspireMusic"):
+    def __init__(self, model_base_path: str = None):
+        """
+        Initialize the InspireMusic model manager.
+        
+        Args:
+            model_base_path: Base path where InspireMusic models are stored
+        """
+        if model_base_path is None:
+            # Get the directory of this script and construct the model path
+            current_dir = Path(__file__).parent.absolute()
+            # Try to find ComfyUI models directory
+            # Check if we're in custom_nodes/ComfyUI-InspireMusic structure
+            if "custom_nodes" in str(current_dir):
+                # Navigate up to ComfyUI root and find models
+                comfyui_root = current_dir.parent.parent
+                model_base_path = comfyui_root / "models" / "InspireMusic"
+            else:
+                # Fallback to relative path
+                model_base_path = current_dir.parent / "models" / "InspireMusic"
+        
         self.model_base_path = Path(model_base_path)
         self.loaded_models = {}
         self.device = self._get_device()
