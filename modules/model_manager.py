@@ -219,7 +219,7 @@ class InspireMusicModelManager:
             "device": self.device
         }
         
-    def load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000):
+    def load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000, model_dir: str = None):
         """
         Load an InspireMusic model.
         
@@ -227,6 +227,7 @@ class InspireMusicModelManager:
             model_name: Name of the model to load
             fast_mode: Whether to use fast inference mode
             output_sample_rate: Target sample rate for output
+            model_dir: Optional custom model directory path (for server deployment)
             
         Returns:
             Loaded InspireMusic model instance
@@ -234,29 +235,35 @@ class InspireMusicModelManager:
         from inspiremusic.cli.inference import InspireMusicModel
         
         # Check if model is already loaded
-        cache_key = f"{model_name}_{fast_mode}_{output_sample_rate}"
+        cache_key = f"{model_name}_{fast_mode}_{output_sample_rate}_{model_dir or 'default'}"
         if cache_key in self.loaded_models:
             return self.loaded_models[cache_key]
             
-        # Get model information
-        print(f"[DEBUG] Looking for model: {model_name}")
-        print(f"[DEBUG] Model base path: {self.model_base_path.resolve()}")
-        
-        model_info = self.get_model_info(model_name)
-        print(f"[DEBUG] Model info: {model_info}")
-        
-        if not model_info or not model_info.get('valid', False):
-            print(f"[DEBUG] Available models: {list(self.get_available_models().keys())}")
-            raise ValueError(f"Model {model_name} not found or invalid")
+        # Use custom model_dir if provided (for server deployment)
+        if model_dir:
+            print(f"[DEBUG] Using custom model directory: {model_dir}")
+            model_path = model_dir
+        else:
+            # Get model information from local paths
+            print(f"[DEBUG] Looking for model: {model_name}")
+            print(f"[DEBUG] Model base path: {self.model_base_path.resolve()}")
             
-        model_path = model_info['path']
-        config_path = model_info['config']
-        
-        if not config_path:
-            raise ValueError(f"Configuration file not found for model {model_name}")
+            model_info = self.get_model_info(model_name)
+            print(f"[DEBUG] Model info: {model_info}")
+            
+            if not model_info or not model_info.get('valid', False):
+                print(f"[DEBUG] Available models: {list(self.get_available_models().keys())}")
+                raise ValueError(f"Model {model_name} not found or invalid")
+                
+            model_path = model_info['path']
+            config_path = model_info['config']
+            
+            if not config_path:
+                raise ValueError(f"Configuration file not found for model {model_name}")
             
         try:
             # Load the model using InspireMusic's inference interface
+            # For server deployment, let InspireMusic handle the model loading
             model = InspireMusicModel(
                 model_name=model_name,
                 model_dir=model_path,

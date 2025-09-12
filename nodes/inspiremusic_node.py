@@ -77,6 +77,10 @@ class InspireMusicTextToMusicNode:
             },
             "optional": {
                 "audio_prompt": ("AUDIO", {}),
+                "model_dir": ("STRING", {
+                    "default": "",
+                    "multiline": False
+                }),
                 "seed": ("INT", {
                     "default": -1,
                     "min": -1,
@@ -95,13 +99,14 @@ class InspireMusicTextToMusicNode:
         self.model_manager = InspireMusicModelManager()
         self.device = self.model_manager.device
     
-    def _load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000):
+    def _load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000, model_dir: str = None):
         """Load the InspireMusic model"""
         try:
             self.model = self.model_manager.load_model(
                 model_name=model_name,
                 fast_mode=fast_mode,
-                output_sample_rate=output_sample_rate
+                output_sample_rate=output_sample_rate,
+                model_dir=model_dir if model_dir and model_dir.strip() else None
             )
         except Exception as e:
             logging.error(f"Failed to load model {model_name}: {str(e)}")
@@ -149,7 +154,7 @@ class InspireMusicTextToMusicNode:
                       duration_min: float, duration_max: float, output_sample_rate: int,
                       chorus_mode: str, fast_mode: bool, fade_out: bool,
                       fade_out_duration: float, trim_silence: bool,
-                      audio_prompt=None, seed: int = -1):
+                      audio_prompt=None, model_dir: str = "", seed: int = -1):
         """Generate music using InspireMusic"""
         
         try:
@@ -159,7 +164,7 @@ class InspireMusicTextToMusicNode:
                 np.random.seed(seed)
             
             # Load model
-            model = self._load_model(model_name, fast_mode, output_sample_rate)
+            model = self._load_model(model_name, fast_mode, output_sample_rate, model_dir)
             
             # Prepare audio prompt if provided
             audio_prompt_path = None
