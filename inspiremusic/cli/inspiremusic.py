@@ -33,18 +33,31 @@ class InspireMusic:
                 model_dir = f"../../pretrained_models/{model_name}"
 
         if not os.path.isfile(os.path.join(model_dir, "llm.pt")):
-            model_name = model_dir.split("/")[-1]
-            if hub == "modelscope":
-                from modelscope import snapshot_download
-                if model_name == "InspireMusic-Base":
-                    snapshot_download(f"iic/InspireMusic", local_dir=model_dir)
-                else:
-                    snapshot_download(f"iic/InspireMusic", local_dir=model_dir)
-            elif hub == "huggingface":
-                from huggingface_hub import snapshot_download
-                snapshot_download(repo_id=f"FunAudioLLM/{model_name}", local_dir=model_dir)
+            # Extract model name from path for downloading
+            model_name = os.path.basename(model_dir.rstrip('/'))
+            
+            # Only attempt download if model_dir looks like a relative path or doesn't exist
+            # Skip download for absolute paths that already exist (server deployment)
+            if os.path.isabs(model_dir) and os.path.exists(model_dir):
+                # For server deployment, assume model files are already present
+                # Just check if required files exist
+                required_files = ['llm.pt', 'flow.pt', 'inspiremusic.yaml']
+                missing_files = [f for f in required_files if not os.path.exists(os.path.join(model_dir, f))]
+                if missing_files:
+                    raise FileNotFoundError(f"Required model files missing in {model_dir}: {missing_files}")
             else:
-                download_model(repo_url, model_dir, token)
+                # Download model for local/relative paths
+                if hub == "modelscope":
+                    from modelscope import snapshot_download
+                    if model_name == "InspireMusic-Base":
+                        snapshot_download(f"iic/InspireMusic", local_dir=model_dir)
+                    else:
+                        snapshot_download(f"iic/{model_name}", local_dir=model_dir)
+                elif hub == "huggingface":
+                    from huggingface_hub import snapshot_download
+                    snapshot_download(repo_id=f"FunAudioLLM/{model_name}", local_dir=model_dir)
+                else:
+                    download_model(repo_url, model_dir, token)
 
         with open(os.path.join(model_dir, 'inspiremusic.yaml'), 'r') as f:
             configs = load_hyperpyyaml(f)
