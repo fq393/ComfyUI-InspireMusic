@@ -104,7 +104,26 @@ class InspireMusicModelManager:
         Returns:
             Path to config file or None if not found
         """
-        # Map model names to config files
+        # First, try to find config files in the model directory itself
+        available_models = self.get_available_models()
+        if model_name in available_models:
+            model_path = Path(available_models[model_name])
+            
+            # Look for config files in the model directory
+            config_files = [
+                "config.json",
+                "configuration.json", 
+                "inspiremusic.yaml",
+                "model_config.json",
+                "config.yaml"
+            ]
+            
+            for config_file in config_files:
+                config_path = model_path / config_file
+                if config_path.exists():
+                    return str(config_path)
+        
+        # Fallback: Map model names to config files in common locations
         config_mapping = {
             "InspireMusic-1.5B-Long": "inspiremusic_1.5b_long.yaml",
             "InspireMusic-1.5B": "inspiremusic_1.5b.yaml",
