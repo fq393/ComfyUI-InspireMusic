@@ -26,11 +26,6 @@ ComfyUI-InspireMusic/
 └── requirements.txt        # 依赖列表
 ```
 
-## InspireMusic
-<p align="center"><table><tr><td style="text-align:center;"><img alt="Light" src="asset/InspireMusic.png" width="100%" /></tr><tr><td style="text-align:center;">
-Figure 1: An overview of the InspireMusic. We introduce InspireMusic, a toolkit designed for music, song, audio generation capable of producing high-quality long-form music. InspireMusic consists of the following three key components. Audio Tokenizers convert the raw audio waveform into discrete audio tokens that can be efficiently processed and trained by the autoregressive transformer model. Audio waveform of lower sampling rate has converted to discrete tokens via a high bitrate compression audio tokenizer<a href="https://openreview.net/forum?id=yBlVlS2Fd9" target="_blank"><sup>[1]</sup></a>. Autoregressive Transformer model is based on Qwen2.5<a href="https://arxiv.org/abs/2412.15115" target="_blank"><sup>[2]</sup></a> as the backbone model and is trained using a next-token prediction approach on both text and audio tokens, enabling it to generate coherent and contextually relevant token sequences. The audio and text tokens are the inputs of an autoregressive model with the next token prediction to generate tokens. Super-Resolution Flow-Matching Model based on flow modeling method, maps the generated tokens to latent features with high-resolution fine-grained acoustic details<a href="https://arxiv.org/abs/2305.02765" target="_blank"><sup>[3]</sup></a> obtained from a higher sampling rate of audio to ensure the acoustic information flow connected with high fidelity through models. A vocoder then generates the final audio waveform from these enhanced latent features. InspireMusic supports a range of tasks including text-to-music, music continuation, music reconstruction and super resolution..
-</td></tr></table></p>
-
 ## 安装
 
 ### 环境要求
