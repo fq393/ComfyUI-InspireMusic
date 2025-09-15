@@ -164,7 +164,7 @@ class InspireMusicModel:
                     "chorus"         : chorus,
                     "task"           : task,
                     "stream"         : False,
-                    "duration_to_gen": self.max_generate_audio_seconds,
+                    "duration_to_gen": min(time_end, self.max_generate_audio_seconds),
                     "sr"             : self.sample_rate
                 }
             elif task == 'continuation':
@@ -185,7 +185,7 @@ class InspireMusicModel:
                     "chorus"         : chorus,
                     "task"           : task,
                     "stream"         : False,
-                    "duration_to_gen": self.max_generate_audio_seconds,
+                    "duration_to_gen": min(time_end, self.max_generate_audio_seconds),
                     "sr"             : self.sample_rate
                 }
 

@@ -213,7 +213,7 @@ class InspireMusicModelManager:
             "device": self.device
         }
         
-    def load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000, model_dir: str = None):
+    def load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000, model_dir: str = None, max_duration: float = 180.0):
         """
         Load an InspireMusic model.
         
@@ -222,6 +222,7 @@ class InspireMusicModelManager:
             fast_mode: Whether to use fast inference mode
             output_sample_rate: Target sample rate for output
             model_dir: Optional custom model directory path (for server deployment)
+            max_duration: Maximum duration in seconds for audio generation
             
         Returns:
             Loaded InspireMusic model instance
@@ -229,7 +230,7 @@ class InspireMusicModelManager:
         from inspiremusic.cli.inference import InspireMusicModel
         
         # Check if model is already loaded
-        cache_key = f"{model_name}_{fast_mode}_{output_sample_rate}_{model_dir or 'default'}"
+        cache_key = f"{model_name}_{fast_mode}_{output_sample_rate}_{model_dir or 'default'}_{max_duration}"
         if cache_key in self.loaded_models:
             return self.loaded_models[cache_key]
             
@@ -259,7 +260,7 @@ class InspireMusicModelManager:
                 output_sample_rate=output_sample_rate,
                 fast=fast_mode,
                 gpu=0 if self.device == 'cuda' else -1,
-                max_generate_audio_seconds=180.0  # Allow up to 180 seconds generation
+                max_generate_audio_seconds=max_duration  # Use the provided max_duration
             )
             
             # Cache the loaded model

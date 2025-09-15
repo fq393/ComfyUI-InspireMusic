@@ -89,13 +89,14 @@ class InspireMusicTextToMusicNode:
         self.model_manager = InspireMusicModelManager()
         self.device = self.model_manager.device
     
-    def _load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000):
+    def _load_model(self, model_name: str, fast_mode: bool = False, output_sample_rate: int = 48000, max_duration: float = 180.0):
         """Load the InspireMusic model"""
         try:
             self.model = self.model_manager.load_model(
                 model_name=model_name,
                 fast_mode=fast_mode,
-                output_sample_rate=output_sample_rate
+                output_sample_rate=output_sample_rate,
+                max_duration=max_duration
             )
         except Exception as e:
             logging.error(f"Failed to load model {model_name}: {str(e)}")
@@ -158,8 +159,8 @@ class InspireMusicTextToMusicNode:
                 torch.manual_seed(seed)
                 np.random.seed(seed)
             
-            # Load model
-            model = self._load_model(model_name, fast_mode, output_sample_rate)
+            # Load model with the requested duration as max_duration
+            model = self._load_model(model_name, fast_mode, output_sample_rate, duration)
             
             # Prepare audio prompt if provided
             audio_prompt_path = None
