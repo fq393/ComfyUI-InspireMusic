@@ -33,19 +33,56 @@ class InspireMusicFrontEnd:
                  fast: bool = False,
                  fp16: bool = True,
                  allowed_special: str = 'all'):
-        self.tokenizer = get_tokenizer()
+        import logging
+        logging.info(f"[DEBUG] InspireMusicFrontEnd.__init__ called")
+        logging.info(f"[DEBUG] Parameters: llm_model={llm_model}, flow_model={flow_model}")
+        logging.info(f"[DEBUG] music_tokenizer_dir={music_tokenizer_dir}")
+        logging.info(f"[DEBUG] audio_tokenizer_dir={audio_tokenizer_dir}")
+        
+        logging.info(f"[DEBUG] Calling get_tokenizer function...")
+        try:
+            self.tokenizer = get_tokenizer()
+            logging.info(f"[DEBUG] get_tokenizer() returned: {type(self.tokenizer)}")
+            if hasattr(self.tokenizer, 'name_or_path'):
+                logging.info(f"[DEBUG] Tokenizer name_or_path: {self.tokenizer.name_or_path}")
+        except Exception as e:
+            logging.error(f"[DEBUG] get_tokenizer() failed: {e}")
+            raise
+        
         self.audio_tokenizer_dir = audio_tokenizer_dir
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        logging.info(f"[DEBUG] Using device: {self.device}")
 
         self.bandwidth_id = torch.tensor([0]).to(self.device)
-        self.wavtokenizer = WavTokenizer.from_pretrained_feat(f"{audio_tokenizer_dir}/config.yaml", f"{audio_tokenizer_dir}/model.pt").to(self.device)
+        
+        logging.info(f"[DEBUG] Loading WavTokenizer from: {audio_tokenizer_dir}")
+        try:
+            self.wavtokenizer = WavTokenizer.from_pretrained_feat(f"{audio_tokenizer_dir}/config.yaml", f"{audio_tokenizer_dir}/model.pt").to(self.device)
+            logging.info(f"[DEBUG] WavTokenizer loaded successfully")
+        except Exception as e:
+            logging.error(f"[DEBUG] WavTokenizer loading failed: {e}")
+            raise
 
-        self.model = InspireMusicModel(configs['llm'], configs['flow'], configs['hift'], configs['wavtokenizer'], dtype, fast, fp16)
-        self.model = self.model.load(llm_model, flow_model, music_tokenizer_dir, audio_tokenizer_dir)
+        logging.info(f"[DEBUG] Creating InspireMusicModel...")
+        try:
+            self.model = InspireMusicModel(configs['llm'], configs['flow'], configs['hift'], configs['wavtokenizer'], dtype, fast, fp16)
+            logging.info(f"[DEBUG] InspireMusicModel created successfully")
+        except Exception as e:
+            logging.error(f"[DEBUG] InspireMusicModel creation failed: {e}")
+            raise
+        
+        logging.info(f"[DEBUG] Loading model weights...")
+        try:
+            self.model = self.model.load(llm_model, flow_model, music_tokenizer_dir, audio_tokenizer_dir)
+            logging.info(f"[DEBUG] Model weights loaded successfully")
+        except Exception as e:
+            logging.error(f"[DEBUG] Model weights loading failed: {e}")
+            raise
 
         self.instruct = instruct
         self.allowed_special = allowed_special
         self.inflect_parser = inflect.engine()
+        logging.info(f"[DEBUG] InspireMusicFrontEnd initialization completed")
 
     def _extract_text_token(self, text):
         text_token = self.tokenizer.encode(text, allowed_special=self.allowed_special)

@@ -32,20 +32,41 @@ class InspireMusic:
             else:
                 model_dir = f"../../pretrained_models/{model_name}"
 
+        logging.info(f"[DEBUG] InspireMusic.__init__ called with model_dir: {model_dir}")
+        logging.info(f"[DEBUG] Checking for llm.pt at: {os.path.join(model_dir, 'llm.pt')}")
+        logging.info(f"[DEBUG] llm.pt exists: {os.path.isfile(os.path.join(model_dir, 'llm.pt'))}")
+        
         if not os.path.isfile(os.path.join(model_dir, "llm.pt")):
             # Extract model name from path for downloading
             model_name = os.path.basename(model_dir.rstrip('/'))
+            logging.info(f"[DEBUG] Extracted model name: {model_name}")
             
             # Only attempt download if model_dir looks like a relative path or doesn't exist
             # Skip download for absolute paths that already exist (server deployment)
             if os.path.isabs(model_dir) and os.path.exists(model_dir):
+                logging.info(f"[DEBUG] Model directory is absolute and exists, checking required files")
                 # For server deployment, assume model files are already present
                 # Just check if required files exist
                 required_files = ['llm.pt', 'flow.pt', 'inspiremusic.yaml']
+                logging.info(f"[DEBUG] Required files for InspireMusic: {required_files}")
+                
+                for file in required_files:
+                    file_path = os.path.join(model_dir, file)
+                    file_exists = os.path.exists(file_path)
+                    logging.info(f"[DEBUG] File {file}: exists={file_exists}, path={file_path}")
+                
                 missing_files = [f for f in required_files if not os.path.exists(os.path.join(model_dir, f))]
                 if missing_files:
+                    logging.error(f"[DEBUG] Missing required files: {missing_files}")
+                    # List all files in the model directory for debugging
+                    try:
+                        all_files = os.listdir(model_dir)
+                        logging.info(f"[DEBUG] All files in InspireMusic model directory: {all_files}")
+                    except Exception as e:
+                        logging.error(f"[DEBUG] Failed to list files in InspireMusic model directory: {e}")
                     raise FileNotFoundError(f"Required model files missing in {model_dir}: {missing_files}")
             else:
+                logging.info(f"[DEBUG] Attempting to download model {model_name}")
                 # Download model for local/relative paths
                 if hub == "modelscope":
                     from modelscope import snapshot_download
@@ -59,20 +80,62 @@ class InspireMusic:
                 else:
                     download_model(repo_url, model_dir, token)
 
-        with open(os.path.join(model_dir, 'inspiremusic.yaml'), 'r') as f:
+        config_path = os.path.join(model_dir, 'inspiremusic.yaml')
+        logging.info(f"[DEBUG] Loading config from: {config_path}")
+        logging.info(f"[DEBUG] Config file exists: {os.path.exists(config_path)}")
+        
+        with open(config_path, 'r') as f:
             configs = load_hyperpyyaml(f)
+        
+        logging.info(f"[DEBUG] Config loaded successfully")
+        logging.info(f"[DEBUG] Config keys: {list(configs.keys()) if isinstance(configs, dict) else 'Not a dict'}")
 
+        # Log tokenizer configuration
+        if 'get_tokenizer' in configs:
+            logging.info(f"[DEBUG] get_tokenizer found in config")
+        else:
+            logging.error(f"[DEBUG] get_tokenizer NOT found in config")
+        
+        tokenizer_dir = '{}/'.format(model_dir)
+        music_tokenizer_dir = '{}/music_tokenizer/'.format(model_dir)
+        wavtokenizer_dir = '{}/wavtokenizer/'.format(model_dir)
+        
+        logging.info(f"[DEBUG] Tokenizer directory: {tokenizer_dir}")
+        logging.info(f"[DEBUG] Music tokenizer directory: {music_tokenizer_dir}")
+        logging.info(f"[DEBUG] Wavtokenizer directory: {wavtokenizer_dir}")
+        
+        # Check if directories exist
+        logging.info(f"[DEBUG] Music tokenizer dir exists: {os.path.exists(music_tokenizer_dir)}")
+        logging.info(f"[DEBUG] Wavtokenizer dir exists: {os.path.exists(wavtokenizer_dir)}")
+        
+        # List contents of tokenizer directories
+        try:
+            if os.path.exists(music_tokenizer_dir):
+                music_files = os.listdir(music_tokenizer_dir)
+                logging.info(f"[DEBUG] Music tokenizer files: {music_files}")
+        except Exception as e:
+            logging.error(f"[DEBUG] Failed to list music tokenizer files: {e}")
+            
+        try:
+            if os.path.exists(wavtokenizer_dir):
+                wav_files = os.listdir(wavtokenizer_dir)
+                logging.info(f"[DEBUG] Wavtokenizer files: {wav_files}")
+        except Exception as e:
+            logging.error(f"[DEBUG] Failed to list wavtokenizer files: {e}")
+        
+        logging.info(f"[DEBUG] Initializing InspireMusicFrontEnd...")
         self.frontend = InspireMusicFrontEnd(configs,
                                           configs['get_tokenizer'],
                                           '{}/llm.pt'.format(model_dir),
                                           '{}/flow.pt'.format(model_dir),
-                                          '{}/music_tokenizer/'.format(model_dir),
-                                          '{}/wavtokenizer/'.format(model_dir),
+                                          music_tokenizer_dir,
+                                          wavtokenizer_dir,
                                           instruct,
                                           dtype,
                                           fast,
                                           fp16,
                                           configs['allowed_special'])
+        logging.info(f"[DEBUG] InspireMusicFrontEnd initialized successfully")
 
         self.model = InspireMusicModel(configs['llm'], configs['flow'], configs['hift'], configs['wavtokenizer'], dtype, fast, fp16)
         self.model.load(os.path.join(model_dir, 'llm.pt'),

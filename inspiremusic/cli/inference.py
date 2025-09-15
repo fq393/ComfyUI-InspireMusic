@@ -66,11 +66,29 @@ class InspireMusicModel:
             model_dir = os.path.abspath(model_dir)
 
         # Check if model directory exists and contains required files
+        logging.info(f"[DEBUG] Checking model directory: {model_dir}")
+        logging.info(f"[DEBUG] Model directory exists: {os.path.isdir(model_dir)}")
+        logging.info(f"[DEBUG] Model directory is absolute: {os.path.isabs(model_dir)}")
+        
         if os.path.isdir(model_dir) and os.path.isabs(model_dir):
             # For absolute paths that exist, check if required files are present
             required_files = ["llm.pt", "flow.pt", "tokenizer.model"]
+            logging.info(f"[DEBUG] Checking for required files: {required_files}")
+            
+            for file in required_files:
+                file_path = os.path.join(model_dir, file)
+                file_exists = os.path.isfile(file_path)
+                logging.info(f"[DEBUG] File {file}: exists={file_exists}, path={file_path}")
+            
             missing_files = [f for f in required_files if not os.path.isfile(os.path.join(model_dir, f))]
             if missing_files:
+                logging.error(f"[DEBUG] Missing files: {missing_files}")
+                # List all files in the model directory for debugging
+                try:
+                    all_files = os.listdir(model_dir)
+                    logging.info(f"[DEBUG] All files in model directory: {all_files}")
+                except Exception as e:
+                    logging.error(f"[DEBUG] Failed to list files in model directory: {e}")
                 raise FileNotFoundError(f"Model directory {model_dir} exists but missing required files: {missing_files}")
         elif not os.path.isfile(os.path.join(model_dir, "llm.pt")):
             # Download model if directory doesn't exist or required files are missing
@@ -108,7 +126,9 @@ class InspireMusicModel:
         else:
             self.device = torch.device('cpu')
 
+        logging.info(f"[DEBUG] Initializing InspireMusic model with model_dir: {self.model_dir}")
         self.model = InspireMusic(self.model_dir, load_jit=load_jit, load_onnx=load_onnx, dtype=dtype, fast=fast, fp16=fp16)
+        logging.info(f"[DEBUG] InspireMusic model initialized successfully")
 
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
