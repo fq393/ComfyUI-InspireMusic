@@ -60,8 +60,20 @@ class InspireMusicModel:
                 model_dir = f"..\..\pretrained_models\{model_name}"
             else:
                 model_dir = f"../../pretrained_models/{model_name}"
+        
+        # Ensure we use absolute path to avoid relative path issues
+        if not os.path.isabs(model_dir):
+            model_dir = os.path.abspath(model_dir)
 
-        if not os.path.isfile(os.path.join(model_dir, "llm.pt")):
+        # Check if model directory exists and contains required files
+        if os.path.isdir(model_dir) and os.path.isabs(model_dir):
+            # For absolute paths that exist, check if required files are present
+            required_files = ["llm.pt", "flow.pt", "tokenizer.model"]
+            missing_files = [f for f in required_files if not os.path.isfile(os.path.join(model_dir, f))]
+            if missing_files:
+                raise FileNotFoundError(f"Model directory {model_dir} exists but missing required files: {missing_files}")
+        elif not os.path.isfile(os.path.join(model_dir, "llm.pt")):
+            # Download model if directory doesn't exist or required files are missing
             if hub == "modelscope":
                 from modelscope import snapshot_download
                 if model_name == "InspireMusic-Base":

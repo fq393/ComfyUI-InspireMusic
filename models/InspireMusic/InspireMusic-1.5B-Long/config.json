@@ -1,8 +1,0 @@
-{
-  "model_name": "InspireMusic-1.5B-Long",
-  "model_type": "inspire_music",
-  "sample_rate": 48000,
-  "channels": 2,
-  "duration": 30,
-  "description": "InspireMusic 1.5B Long model for music generation"
-}
