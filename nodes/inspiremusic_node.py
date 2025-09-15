@@ -44,7 +44,7 @@ class InspireMusicTextToMusicNode:
                 "duration": ("FLOAT", {
                     "default": 30.0,
                     "min": 5.0,
-                    "max": 180.0,
+                    "max": 120.0,
                     "step": 1.0
                 }),
                 "output_sample_rate": ([24000, 48000], {
@@ -225,7 +225,25 @@ class InspireMusicTextToMusicNode:
             return (audio_output,)
             
         except Exception as e:
-            logging.error(f"Music generation failed: {str(e)}")
+            # 获取GPU内存信息
+            gpu_info = ""
+            if torch.cuda.is_available():
+                gpu_memory_allocated = torch.cuda.memory_allocated() / 1024**3  # GB
+                gpu_memory_reserved = torch.cuda.memory_reserved() / 1024**3   # GB
+                gpu_memory_total = torch.cuda.get_device_properties(0).total_memory / 1024**3  # GB
+                gpu_info = f" | GPU Memory: {gpu_memory_allocated:.2f}GB allocated, {gpu_memory_reserved:.2f}GB reserved, {gpu_memory_total:.2f}GB total"
+            
+            # 详细的错误日志
+            error_type = type(e).__name__
+            logging.error(f"Music generation failed: {error_type} - {str(e)}")
+            logging.error(f"Generation parameters: duration={duration}s, model={model_name}, sample_rate={output_sample_rate}, fast_mode={fast_mode}{gpu_info}")
+            
+            # 如果是内存相关错误，提供具体建议
+            if "allocation" in str(e).lower() or "memory" in str(e).lower() or "cuda" in str(e).lower():
+                estimated_tokens = int(duration * 75)  # 估算的token数量
+                logging.error(f"Memory allocation failed! Estimated audio tokens for {duration}s: {estimated_tokens}")
+                logging.error("Suggestions: 1) Reduce duration (try 60-120s), 2) Enable fast_mode, 3) Use lower sample_rate (24000), 4) Free GPU memory")
+            
             # Return empty audio on failure
             empty_audio = {
                 "waveform": torch.zeros(1, 1, int(output_sample_rate * 5)),

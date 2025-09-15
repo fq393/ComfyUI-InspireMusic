@@ -137,9 +137,9 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/
 | text_prompt | STRING | "A captivating classical piano performance..." | 音乐描述文本，支持多行输入 |
 | model_name | COMBO | "InspireMusic-1.5B-Long" | 模型选择：InspireMusic-1.5B-Long, InspireMusic-1.5B, InspireMusic-Base等 |
 | task_type | COMBO | "text-to-music" | 任务类型：text-to-music（文本生成音乐）或 continuation（音乐续写） |
-| duration | FLOAT | 30.0 | 生成时长（秒），范围：5.0-180.0 |
+| duration | FLOAT | 30.0 | 生成时长（秒），范围：5.0-120.0 |
 | output_sample_rate | COMBO | 48000 | 输出采样率：24000 或 48000 Hz |
-| chorus_mode | COMBO | "default" | 音乐结构模式：default, random, verse, chorus, intro, outro |
+| chorus_mode | COMBO | "default" | 音乐结构模式：default（默认结构）, random（随机结构）, verse（主歌段落）, chorus（副歌段落）, intro（前奏）, outro（尾奏） |
 | fast_mode | BOOLEAN | False | 快速模式（速度优先）或高质量模式 |
 | fade_out | BOOLEAN | True | 是否应用淡出效果 |
 | fade_out_duration | FLOAT | 1.0 | 淡出时长（秒），范围：0.1-5.0 |
@@ -151,6 +151,19 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/
 |------|------|--------|------|
 | audio_prompt | AUDIO | - | 音频提示（用于音乐续写任务） |
 | seed | INT | -1 | 随机种子，-1表示随机生成 |
+
+#### chorus_mode 详细说明
+
+`chorus_mode` 参数控制生成音乐的结构类型和段落特征：
+
+- **intro**: 适合生成轻柔的开场音乐
+- **verse**: 适合生成主要的叙述性音乐段落
+- **chorus**: 适合生成高潮、重复性强的音乐段落
+- **outro**: 适合生成结尾淡出的音乐
+- **random**: 让模型随机选择段落类型，增加多样性
+- **default**: 使用标准的主歌模式
+
+不同的chorus_mode会影响音乐的情感表达和结构特征，建议根据具体需求选择合适的模式。
 
 ## 故障排除
 
