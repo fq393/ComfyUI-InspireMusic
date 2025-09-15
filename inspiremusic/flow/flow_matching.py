@@ -17,7 +17,7 @@ import torch
 import torch.nn.functional as F
 
 # Add Matcha-TTS to Python path
-matcha_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'Matcha-TTS')
+matcha_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Matcha-TTS')
 if os.path.exists(matcha_path) and matcha_path not in sys.path:
     sys.path.insert(0, matcha_path)
 
