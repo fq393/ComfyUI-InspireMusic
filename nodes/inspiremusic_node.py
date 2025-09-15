@@ -67,6 +67,9 @@ class InspireMusicTextToMusicNode:
                 }),
                 "trim_silence": ("BOOLEAN", {
                     "default": False
+                }),
+                "stream": ("BOOLEAN", {
+                    "default": False
                 })
             },
             "optional": {
@@ -149,7 +152,7 @@ class InspireMusicTextToMusicNode:
     def generate_music(self, text_prompt: str, model_name: str, task_type: str,
                       duration: float, output_sample_rate: int,
                       chorus_mode: str, fast_mode: bool, fade_out: bool,
-                      fade_out_duration: float, trim_silence: bool,
+                      fade_out_duration: float, trim_silence: bool, stream: bool,
                       audio_prompt=None, seed: int = -1):
         """Generate music using InspireMusic"""
         
@@ -175,32 +178,59 @@ class InspireMusicTextToMusicNode:
             time_end = duration
             
             # Generate music using the CLI interface
-            output_file = model.inference(
-                task=task_type,
-                text=text_prompt,
-                audio_prompt=audio_prompt_path,
-                chorus=chorus_mode,
-                time_start=0.0,
-                time_end=time_end,
-                output_fn="temp_output",
-                fade_out_duration=fade_out_duration if fade_out else 0.0,
-                fade_out_mode=fade_out,
-                trim=trim_silence
-            )
-            
-            # Load the generated audio file
-            generated_audio = None
-            if output_file and os.path.exists(output_file):
-                generated_audio, _ = load_audio(output_file, target_sr=output_sample_rate)
-                generated_audio = generated_audio.squeeze(0)  # Remove channel dimension
+            if stream:
+                # Stream mode: collect audio chunks from generator
+                audio_chunks = []
+                for audio_chunk in model.inference(
+                    task=task_type,
+                    text=text_prompt,
+                    audio_prompt=audio_prompt_path,
+                    chorus=chorus_mode,
+                    time_start=0.0,
+                    time_end=time_end,
+                    output_fn="temp_output",
+                    fade_out_duration=fade_out_duration if fade_out else 0.0,
+                    fade_out_mode=fade_out,
+                    trim=trim_silence,
+                    stream=True
+                ):
+                    audio_chunks.append(audio_chunk)
                 
-                # Clean up the temporary output file
-                try:
-                    os.unlink(output_file)
-                except:
-                    pass
+                # Concatenate all audio chunks
+                if audio_chunks:
+                    generated_audio = torch.cat(audio_chunks, dim=-1)
+                else:
+                    generated_audio = torch.zeros(2, int(output_sample_rate * duration))
             else:
-                raise RuntimeError("Failed to generate audio file")
+                # Non-stream mode: traditional file-based output
+                output_file = model.inference(
+                    task=task_type,
+                    text=text_prompt,
+                    audio_prompt=audio_prompt_path,
+                    chorus=chorus_mode,
+                    time_start=0.0,
+                    time_end=time_end,
+                    output_fn="temp_output",
+                    fade_out_duration=fade_out_duration if fade_out else 0.0,
+                    fade_out_mode=fade_out,
+                    trim=trim_silence,
+                    stream=False
+                )
+            
+            # Load the generated audio file (only for non-stream mode)
+            if not stream:
+                generated_audio = None
+                if output_file and os.path.exists(output_file):
+                    generated_audio, _ = load_audio(output_file, target_sr=output_sample_rate)
+                    generated_audio = generated_audio.squeeze(0)  # Remove channel dimension
+                    
+                    # Clean up the temporary output file
+                    try:
+                        os.unlink(output_file)
+                    except:
+                        pass
+                else:
+                    raise RuntimeError("Failed to generate audio file")
             
             # Ensure generated_audio is not None
             if generated_audio is None:

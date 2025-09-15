@@ -140,6 +140,7 @@ class InspireMusicModel:
                   output_format: str = "wav",
                   fade_out_mode: bool = True,
                   trim: bool = False,
+                  stream: bool = False,
                   ):
 
         with torch.no_grad():
@@ -163,7 +164,7 @@ class InspireMusicModel:
                     "time_end"       : time_end_tensor,
                     "chorus"         : chorus,
                     "task"           : task,
-                    "stream"         : False,
+                    "stream"         : stream,
                     "duration_to_gen": time_end,
                     "sr"             : self.sample_rate
                 }
@@ -184,67 +185,86 @@ class InspireMusicModel:
                     "time_end"       : time_end_tensor,
                     "chorus"         : chorus,
                     "task"           : task,
-                    "stream"         : False,
+                    "stream"         : stream,
                     "duration_to_gen": time_end,
                     "sr"             : self.sample_rate
                 }
 
-            music_audios = []
-            for model_output in self.model.cli_inference(**model_input):
-                music_audios.append(model_output['music_audio'])
-
-            bench_end = time.time()
-
-            if trim:
-                music_audio = trim_audio(music_audios[0],
-                                         sample_rate=self.output_sample_rate,
-                                         threshold=0.05,
-                                         min_silence_duration=0.8)
-            else:
-                music_audio = music_audios[0]
-
-            if music_audio.shape[0] != 0:
-                # Calculate the target length based on time_end instead of max_generate_audio_length
-                target_length = int(self.output_sample_rate * time_end)
-                if music_audio.shape[1] > target_length:
-                    music_audio = music_audio[:, :target_length]
-
-                if music_audio.shape[1] >= self.min_generate_audio_length:
-                    try:
+            if stream:
+                # Stream mode: yield audio chunks as they are generated
+                for model_output in self.model.cli_inference(**model_input):
+                    music_audio = model_output['music_audio']
+                    
+                    if music_audio.shape[0] != 0:
+                        # Calculate the target length based on time_end
+                        target_length = int(self.output_sample_rate * time_end)
+                        if music_audio.shape[1] > target_length:
+                            music_audio = music_audio[:, :target_length]
+                        
                         if fade_out_mode:
                             music_audio = fade_out(music_audio, self.output_sample_rate, fade_out_duration)
-
+                        
                         music_audio = music_audio.repeat(2, 1)
-
-                        if output_format in ["wav", "flac"]:
-                            torchaudio.save(music_fn, music_audio,
-                                            sample_rate=self.output_sample_rate,
-                                            encoding="PCM_S",
-                                            bits_per_sample=24)
-                        elif output_format in ["mp3", "m4a"]:
-                            torchaudio.backend.sox_io_backend.save(
-                                filepath=music_fn, src=music_audio,
-                                sample_rate=self.output_sample_rate,
-                                format=output_format)
-                        else:
-                            logging.info("Format is not supported. Please choose from wav, mp3, m4a, flac.")
-
-                    except Exception as e:
-                        logging.error(f"Error saving file: {e}")
-                        raise
-
-                audio_duration = music_audio.shape[1] / self.output_sample_rate
-                rtf = (bench_end - bench_start) / audio_duration
-                logging.info(f"Processing time: {int(bench_end - bench_start)}s, audio length: {int(audio_duration)}s, rtf: {rtf}, text prompt: {text_prompt}")
-
+                        yield music_audio
             else:
-                logging.error(f"Generated audio length is shorter than minimum required audio length.")
-        if music_fn:
-            if os.path.exists(music_fn):
-                logging.info(f"Generated audio file {music_fn} is saved.")
-                return music_fn
-            else:
-                logging.error(f"{music_fn} does not exist.")
+                # Non-stream mode: collect all audio and process at the end
+                music_audios = []
+                for model_output in self.model.cli_inference(**model_input):
+                    music_audios.append(model_output['music_audio'])
+
+                bench_end = time.time()
+
+                if trim:
+                    music_audio = trim_audio(music_audios[0],
+                                             sample_rate=self.output_sample_rate,
+                                             threshold=0.05,
+                                             min_silence_duration=0.8)
+                else:
+                    music_audio = music_audios[0]
+
+                if music_audio.shape[0] != 0:
+                    # Calculate the target length based on time_end instead of max_generate_audio_length
+                    target_length = int(self.output_sample_rate * time_end)
+                    if music_audio.shape[1] > target_length:
+                        music_audio = music_audio[:, :target_length]
+
+                    if music_audio.shape[1] >= self.min_generate_audio_length:
+                        try:
+                            if fade_out_mode:
+                                music_audio = fade_out(music_audio, self.output_sample_rate, fade_out_duration)
+
+                            music_audio = music_audio.repeat(2, 1)
+
+                            if output_format in ["wav", "flac"]:
+                                torchaudio.save(music_fn, music_audio,
+                                                sample_rate=self.output_sample_rate,
+                                                encoding="PCM_S",
+                                                bits_per_sample=24)
+                            elif output_format in ["mp3", "m4a"]:
+                                torchaudio.backend.sox_io_backend.save(
+                                    filepath=music_fn, src=music_audio,
+                                    sample_rate=self.output_sample_rate,
+                                    format=output_format)
+                            else:
+                                logging.info("Format is not supported. Please choose from wav, mp3, m4a, flac.")
+
+                        except Exception as e:
+                            logging.error(f"Error saving file: {e}")
+                            raise
+
+                    audio_duration = music_audio.shape[1] / self.output_sample_rate
+                    rtf = (bench_end - bench_start) / audio_duration
+                    logging.info(f"Processing time: {int(bench_end - bench_start)}s, audio length: {int(audio_duration)}s, rtf: {rtf}, text prompt: {text_prompt}")
+
+                else:
+                    logging.error(f"Generated audio length is shorter than minimum required audio length.")
+        if not stream:
+            if music_fn:
+                if os.path.exists(music_fn):
+                    logging.info(f"Generated audio file {music_fn} is saved.")
+                    return music_fn
+                else:
+                    logging.error(f"{music_fn} does not exist.")
 
 def get_args():
     parser = argparse.ArgumentParser(description='Run inference with your model')
