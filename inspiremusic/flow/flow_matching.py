@@ -18,10 +18,18 @@ import torch.nn.functional as F
 
 # Add Matcha-TTS to Python path
 matcha_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Matcha-TTS')
+print(f"[DEBUG] flow_matching.py: Calculated matcha_path: {matcha_path}")
+print(f"[DEBUG] flow_matching.py: matcha_path exists: {os.path.exists(matcha_path)}")
 if os.path.exists(matcha_path) and matcha_path not in sys.path:
     sys.path.insert(0, matcha_path)
+    print(f"[DEBUG] flow_matching.py: Added matcha_path to sys.path")
 
-from matcha.models.components.flow_matching import BASECFM
+try:
+    from matcha.models.components.flow_matching import BASECFM
+    print(f"[DEBUG] flow_matching.py: Successfully imported matcha.models.components.flow_matching")
+except ImportError as e:
+    print(f"[ERROR] flow_matching.py: Failed to import matcha.models.components.flow_matching: {e}")
+    raise
 
 
 class ConditionalCFM(BASECFM):
