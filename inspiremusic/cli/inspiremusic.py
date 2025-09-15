@@ -15,7 +15,7 @@ import os
 import sys
 import time
 from tqdm import tqdm
-from hyperpyyaml import load_hyperpyyaml
+
 from inspiremusic.cli.frontend import InspireMusicFrontEnd
 from inspiremusic.cli.model import InspireMusicModel
 from inspiremusic.utils.file_utils import logging
@@ -23,7 +23,7 @@ from inspiremusic.utils.utils import download_model
 import torch
 
 class InspireMusic:
-    def __init__(self, model_dir, load_jit=True, load_onnx=False, dtype = "fp16", fast = False, fp16=True, hub="modelscope", repo_url=None, token=None, use_config_file=False):
+    def __init__(self, model_dir, load_jit=True, load_onnx=False, dtype = "fp16", fast = False, fp16=True, hub="modelscope", repo_url=None, token=None):
         instruct = True if '-Instruct' in model_dir else False
 
         if model_dir is None:
@@ -95,48 +95,9 @@ class InspireMusic:
                 else:
                     download_model(repo_url, model_dir, token)
 
-        if use_config_file:
-            config_path = os.path.join(model_dir, 'inspiremusic.yaml')
-            logging.info(f"[DEBUG] Loading config from: {config_path}")
-            logging.info(f"[DEBUG] Config file exists: {os.path.exists(config_path)}")
-            
-            with open(config_path, 'r') as f:
-                configs = load_hyperpyyaml(f)
-            
-            logging.info(f"[DEBUG] Config loaded successfully")
-            logging.info(f"[DEBUG] Config keys: {list(configs.keys()) if isinstance(configs, dict) else 'Not a dict'}")
-        else:
-            logging.info(f"[DEBUG] Using default configuration instead of config file")
-            configs = self._create_default_config(model_dir)
-            logging.info(f"[DEBUG] Default config created with keys: {list(configs.keys()) if isinstance(configs, dict) else 'Not a dict'}")
-        
-        # Fix relative paths in config to absolute paths
-        if 'basemodel_path' in configs:
-            original_basemodel_path = configs['basemodel_path']
-            logging.info(f"[DEBUG] Original basemodel_path: {original_basemodel_path}")
-            
-            # Convert relative path to absolute path based on model_dir
-            if not os.path.isabs(original_basemodel_path):
-                # Replace relative path with actual model directory
-                configs['basemodel_path'] = model_dir
-                logging.info(f"[DEBUG] Updated basemodel_path from '{original_basemodel_path}' to '{model_dir}'")
-            else:
-                logging.info(f"[DEBUG] basemodel_path is already absolute: {original_basemodel_path}")
-        
-        # Fix generator_path if it's relative
-        if 'generator_path' in configs:
-            original_generator_path = configs['generator_path']
-            logging.info(f"[DEBUG] Original generator_path: {original_generator_path}")
-            
-            if not os.path.isabs(original_generator_path):
-                # Convert relative path to absolute path based on model_dir
-                configs['generator_path'] = os.path.join(model_dir, 'music_tokenizer')
-                logging.info(f"[DEBUG] Updated generator_path from '{original_generator_path}' to '{configs['generator_path']}'")
-            else:
-                logging.info(f"[DEBUG] generator_path is already absolute: {original_generator_path}")
-        
-        # get_tokenizer 已经通过 functools.partial 正确配置了参数
-        logging.info(f"[DEBUG] get_tokenizer configured with tokenizer_path: {model_dir}")
+        logging.info(f"[DEBUG] Using default configuration")
+        configs = self._create_default_config(model_dir)
+        logging.info(f"[DEBUG] Default config created with keys: {list(configs.keys()) if isinstance(configs, dict) else 'Not a dict'}")
 
         # Log tokenizer configuration
         if 'get_tokenizer' in configs:
