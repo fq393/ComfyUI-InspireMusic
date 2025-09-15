@@ -23,7 +23,7 @@ from inspiremusic.utils.utils import download_model
 import torch
 
 class InspireMusic:
-    def __init__(self, model_dir, load_jit=True, load_onnx=False, dtype = "fp16", fast = False, fp16=True, hub="modelscope", repo_url=None, token=None):
+    def __init__(self, model_dir, load_jit=True, load_onnx=False, dtype = "fp16", fast = False, fp16=True, hub="modelscope", repo_url=None, token=None, use_config_file=True):
         instruct = True if '-Instruct' in model_dir else False
 
         if model_dir is None:
@@ -95,15 +95,55 @@ class InspireMusic:
                 else:
                     download_model(repo_url, model_dir, token)
 
-        config_path = os.path.join(model_dir, 'inspiremusic.yaml')
-        logging.info(f"[DEBUG] Loading config from: {config_path}")
-        logging.info(f"[DEBUG] Config file exists: {os.path.exists(config_path)}")
+        if use_config_file:
+            config_path = os.path.join(model_dir, 'inspiremusic.yaml')
+            logging.info(f"[DEBUG] Loading config from: {config_path}")
+            logging.info(f"[DEBUG] Config file exists: {os.path.exists(config_path)}")
+            
+            with open(config_path, 'r') as f:
+                configs = load_hyperpyyaml(f)
+            
+            logging.info(f"[DEBUG] Config loaded successfully")
+            logging.info(f"[DEBUG] Config keys: {list(configs.keys()) if isinstance(configs, dict) else 'Not a dict'}")
+        else:
+            logging.info(f"[DEBUG] Using default configuration instead of config file")
+            configs = self._create_default_config(model_dir)
+            logging.info(f"[DEBUG] Default config created with keys: {list(configs.keys()) if isinstance(configs, dict) else 'Not a dict'}")
         
-        with open(config_path, 'r') as f:
-            configs = load_hyperpyyaml(f)
+        # Fix relative paths in config to absolute paths
+        if 'basemodel_path' in configs:
+            original_basemodel_path = configs['basemodel_path']
+            logging.info(f"[DEBUG] Original basemodel_path: {original_basemodel_path}")
+            
+            # Convert relative path to absolute path based on model_dir
+            if not os.path.isabs(original_basemodel_path):
+                # Replace relative path with actual model directory
+                configs['basemodel_path'] = model_dir
+                logging.info(f"[DEBUG] Updated basemodel_path from '{original_basemodel_path}' to '{model_dir}'")
+            else:
+                logging.info(f"[DEBUG] basemodel_path is already absolute: {original_basemodel_path}")
         
-        logging.info(f"[DEBUG] Config loaded successfully")
-        logging.info(f"[DEBUG] Config keys: {list(configs.keys()) if isinstance(configs, dict) else 'Not a dict'}")
+        # Fix generator_path if it's relative
+        if 'generator_path' in configs:
+            original_generator_path = configs['generator_path']
+            logging.info(f"[DEBUG] Original generator_path: {original_generator_path}")
+            
+            if not os.path.isabs(original_generator_path):
+                # Convert relative path to absolute path based on model_dir
+                configs['generator_path'] = os.path.join(model_dir, 'music_tokenizer')
+                logging.info(f"[DEBUG] Updated generator_path from '{original_generator_path}' to '{configs['generator_path']}'")
+            else:
+                logging.info(f"[DEBUG] generator_path is already absolute: {original_generator_path}")
+        
+        # Update get_tokenizer configuration to use the corrected path
+        if 'get_tokenizer' in configs and hasattr(configs['get_tokenizer'], 'keywords'):
+            if 'tokenizer_path' in configs['get_tokenizer'].keywords:
+                original_tokenizer_path = configs['get_tokenizer'].keywords['tokenizer_path']
+                logging.info(f"[DEBUG] Original tokenizer_path: {original_tokenizer_path}")
+                
+                # Update tokenizer path to use model_dir
+                configs['get_tokenizer'].keywords['tokenizer_path'] = model_dir
+                logging.info(f"[DEBUG] Updated tokenizer_path to: {model_dir}")
 
         # Log tokenizer configuration
         if 'get_tokenizer' in configs:
@@ -159,6 +199,88 @@ class InspireMusic:
                         os.path.join(model_dir, 'wavtokenizer', "model.pt"),
                         )
         del configs
+
+    def _create_default_config(self, model_dir):
+        """创建默认配置，避免读取 YAML 配置文件"""
+        from inspiremusic.text.tokenizer import get_tokenizer
+        from inspiremusic.llm.llm import LLM
+        from inspiremusic.flow.flow import MaskedDiff
+        from inspiremusic.hifigan.generator import HiFTGenerator
+        
+        # 创建默认配置字典
+        configs = {
+            # 基础参数
+            'sample_rate': 24000,
+            'text_encoder_input_size': 512,
+            'llm_input_size': 1536,
+            'llm_output_size': 1536,
+            'basemodel_path': model_dir,
+            'generator_path': os.path.join(model_dir, 'music_tokenizer'),
+            
+            # LLM 配置
+            'llm': {
+                'text_encoder_input_size': 512,
+                'llm_input_size': 1536,
+                'llm_output_size': 1536,
+                'audio_token_size': 4096,
+                'length_normalized_loss': True,
+                'lsm_weight': 0,
+                'text_encoder_conf': {'name': 'none'},
+                'train_cfg_ratio': 0.2,
+                'infer_cfg_ratio': 3.0
+            },
+            
+            # Flow 配置
+            'flow': {
+                'input_size': 256,
+                'output_size': 80,
+                'output_type': 'mel',
+                'vocab_size': 4096,
+                'input_frame_rate': 75,
+                'only_mask_loss': True,
+                'generator_model_dir': os.path.join(model_dir, 'music_tokenizer')
+            },
+            
+            # HiFT 配置
+            'hift': {
+                'in_channels': 80,
+                'base_channels': 512,
+                'nb_harmonics': 8,
+                'sampling_rate': 24000,
+                'nsf_alpha': 0.1,
+                'nsf_sigma': 0.003,
+                'nsf_voiced_threshold': 10,
+                'upsample_rates': [8, 8],
+                'upsample_kernel_sizes': [16, 16],
+                'resblock_kernel_sizes': [3, 7, 11],
+                'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]],
+                'source_resblock_kernel_sizes': [7, 11],
+                'source_resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5]],
+                'lrelu_slope': 0.1,
+                'audio_limit': 0.99
+            },
+            
+            # WavTokenizer 配置
+            'wavtokenizer': {},
+            
+            # Tokenizer 配置
+            'allowed_special': 'all'
+        }
+        
+        # 创建 get_tokenizer 函数对象
+        class TokenizerConfig:
+            def __init__(self, tokenizer_path, tokenizer_name):
+                self.keywords = {
+                    'tokenizer_path': tokenizer_path,
+                    'tokenizer_name': tokenizer_name
+                }
+        
+        configs['get_tokenizer'] = TokenizerConfig(model_dir, 'qwen-2.5')
+        
+        logging.info(f"[DEBUG] Created default config with basemodel_path: {configs['basemodel_path']}")
+        logging.info(f"[DEBUG] Created default config with generator_path: {configs['generator_path']}")
+        
+        return configs
 
     @torch.inference_mode()
     def inference(self, task, text, audio, time_start, time_end, chorus, stream=False, sr=24000):

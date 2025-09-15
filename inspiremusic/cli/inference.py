@@ -51,7 +51,8 @@ class InspireMusicModel:
                  result_dir: str = None,
                  hub="modelscope",
                  repo_url=None,
-                 token=None):
+                 token=None,
+                 use_config_file: bool = True):
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
 
         # Set model_dir or default to downloading if it doesn't exist
@@ -142,7 +143,8 @@ class InspireMusicModel:
             self.device = torch.device('cpu')
 
         logging.info(f"[DEBUG] Initializing InspireMusic model with model_dir: {self.model_dir}")
-        self.model = InspireMusic(self.model_dir, load_jit=load_jit, load_onnx=load_onnx, dtype=dtype, fast=fast, fp16=fp16)
+        logging.info(f"[DEBUG] Using config file: {use_config_file}")
+        self.model = InspireMusic(self.model_dir, load_jit=load_jit, load_onnx=load_onnx, dtype=dtype, fast=fast, fp16=fp16, use_config_file=use_config_file)
         logging.info(f"[DEBUG] InspireMusic model initialized successfully")
 
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
