@@ -5,20 +5,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Add Matcha-TTS to Python path
-matcha_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Matcha-TTS')
-print(f"[DEBUG] hifigan.py: Calculated matcha_path: {matcha_path}")
-print(f"[DEBUG] hifigan.py: matcha_path exists: {os.path.exists(matcha_path)}")
-print(f"[DEBUG] hifigan.py: Current sys.path: {sys.path[:3]}...")  # Show first 3 paths
-if os.path.exists(matcha_path) and matcha_path not in sys.path:
-    sys.path.insert(0, matcha_path)
-    print(f"[DEBUG] hifigan.py: Added matcha_path to sys.path")
-
+# Use official matcha-tts package
 try:
     from matcha.hifigan.models import feature_loss, generator_loss, discriminator_loss
-    print(f"[DEBUG] hifigan.py: Successfully imported matcha.hifigan.models")
+    # Successfully imported matcha.hifigan.models from official package
 except ImportError as e:
     print(f"[ERROR] hifigan.py: Failed to import matcha.hifigan.models: {e}")
+    print(f"[ERROR] Please ensure matcha-tts is installed: pip install matcha-tts")
     raise
 from inspiremusic.utils.losses import tpr_loss, mel_loss
 

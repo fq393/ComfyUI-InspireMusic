@@ -24,44 +24,29 @@ from transformers import AutoTokenizer
 
 def get_tokenizer(tokenizer_name, tokenizer_path):
     import logging
-    logging.info(f"[DEBUG] get_tokenizer called with tokenizer_name='{tokenizer_name}', tokenizer_path='{tokenizer_path}'")
+    import os
     
     # Check if tokenizer_path exists
-    import os
-    logging.info(f"[DEBUG] Tokenizer path exists: {os.path.exists(tokenizer_path)}")
-    logging.info(f"[DEBUG] Tokenizer path is directory: {os.path.isdir(tokenizer_path)}")
-    
-    # List contents of tokenizer directory
     if os.path.exists(tokenizer_path):
         try:
-            files = os.listdir(tokenizer_path)
-            logging.info(f"[DEBUG] Files in tokenizer directory: {files}")
-            
             # Check for specific tokenizer files
             tokenizer_model_path = os.path.join(tokenizer_path, 'tokenizer.model')
             tokenizer_json_path = os.path.join(tokenizer_path, 'tokenizer.json')
             config_json_path = os.path.join(tokenizer_path, 'config.json')
             
-            logging.info(f"[DEBUG] tokenizer.model exists: {os.path.exists(tokenizer_model_path)}")
-            logging.info(f"[DEBUG] tokenizer.json exists: {os.path.exists(tokenizer_json_path)}")
-            logging.info(f"[DEBUG] config.json exists: {os.path.exists(config_json_path)}")
-            
             # Check if at least one tokenizer format is available
             has_sentencepiece = os.path.exists(tokenizer_model_path)
             has_huggingface = os.path.exists(tokenizer_json_path) and os.path.exists(config_json_path)
-            logging.info(f"[DEBUG] Has SentencePiece tokenizer: {has_sentencepiece}")
-            logging.info(f"[DEBUG] Has HuggingFace tokenizer: {has_huggingface}")
             
             if not (has_sentencepiece or has_huggingface):
-                logging.warning(f"[DEBUG] No valid tokenizer format found, but AutoTokenizer may still work")
+                logging.warning(f"No valid tokenizer format found at {tokenizer_path}, but AutoTokenizer may still work")
         except Exception as e:
-            logging.error(f"[DEBUG] Failed to list tokenizer directory: {e}")
+            logging.error(f"Failed to list tokenizer directory: {e}")
     
     if "qwen" in tokenizer_name:
-        logging.info(f"[DEBUG] Creating QwenTokenizer with path: {tokenizer_path}")
         return QwenTokenizer(tokenizer_path,skip_special_tokens=True)
     else:
-        logging.warning(f"[DEBUG] Unknown tokenizer_name: {tokenizer_name}, returning None")
+        logging.warning(f"Unknown tokenizer_name: {tokenizer_name}, returning None")
         return None
 
 class QwenTokenizer(AbsTokenizer):
@@ -71,7 +56,6 @@ class QwenTokenizer(AbsTokenizer):
             skip_special_tokens: bool = True,
     ):
         import logging
-        logging.info(f"[DEBUG] QwenTokenizer.__init__ called with token_path='{token_path}'")
         
         super().__init__()
         # NOTE: non-chat model, all these special tokens keep randomly initialized.
@@ -86,30 +70,21 @@ class QwenTokenizer(AbsTokenizer):
             ]
         }
         
-        logging.info(f"[DEBUG] Loading AutoTokenizer from: {token_path}")
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(token_path)
-            logging.info(f"[DEBUG] AutoTokenizer loaded successfully")
-            logging.info(f"[DEBUG] Tokenizer type: {type(self.tokenizer)}")
-            if hasattr(self.tokenizer, 'name_or_path'):
-                logging.info(f"[DEBUG] Tokenizer name_or_path: {self.tokenizer.name_or_path}")
         except Exception as e:
-            logging.error(f"[DEBUG] AutoTokenizer.from_pretrained failed: {e}")
-            logging.error(f"[DEBUG] Exception type: {type(e)}")
+            logging.error(f"Failed to load tokenizer from {token_path}: {e}")
             import traceback
-            logging.error(f"[DEBUG] Full traceback: {traceback.format_exc()}")
+            logging.error(f"Full traceback: {traceback.format_exc()}")
             raise
         
-        logging.info(f"[DEBUG] Adding special tokens...")
         try:
             self.tokenizer.add_special_tokens(special_tokens)
-            logging.info(f"[DEBUG] Special tokens added successfully")
         except Exception as e:
-            logging.error(f"[DEBUG] Failed to add special tokens: {e}")
+            logging.error(f"Failed to add special tokens: {e}")
             raise
         
         self.skip_special_tokens = skip_special_tokens
-        logging.info(f"[DEBUG] QwenTokenizer initialization completed")
 
     def get_vocab_size(self):
         return self.tokenizer.vocab_size

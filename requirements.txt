@@ -42,3 +42,5 @@ flash-attn==2.7.4.post1
 wget
 pyarrow
 antlr4-python3-runtime
+# 以上是官方依赖，可以不先安装，运行起来缺什么安装什么即可
+matcha-tts

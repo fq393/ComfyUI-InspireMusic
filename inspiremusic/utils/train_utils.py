@@ -289,7 +289,7 @@ def log_per_step(writer, info_dict):
             log_str += 'lr {:.8f} grad_norm {:.6f}'.format(
                 info_dict["lr"], info_dict['grad_norm'])
         log_str += ' rank {}'.format(rank)
-        logging.debug(log_str)
+        logging.info(log_str)
 
 
 def log_per_save(writer, info_dict):

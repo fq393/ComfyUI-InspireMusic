@@ -17,20 +17,14 @@ import torch
 import torch.nn as nn
 from einops import pack, rearrange, repeat
 
-# Add Matcha-TTS to Python path
-matcha_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Matcha-TTS')
-print(f"[DEBUG] decoder.py: Calculated matcha_path: {matcha_path}")
-print(f"[DEBUG] decoder.py: matcha_path exists: {os.path.exists(matcha_path)}")
-if os.path.exists(matcha_path) and matcha_path not in sys.path:
-    sys.path.insert(0, matcha_path)
-    print(f"[DEBUG] decoder.py: Added matcha_path to sys.path")
-
+# Use official matcha-tts package
 try:
     from matcha.models.components.decoder import SinusoidalPosEmb, Block1D, ResnetBlock1D, Downsample1D, TimestepEmbedding, Upsample1D
     from matcha.models.components.transformer import BasicTransformerBlock
-    print(f"[DEBUG] decoder.py: Successfully imported matcha.models.components")
+    # Successfully imported matcha.models.components from official package
 except ImportError as e:
     print(f"[ERROR] decoder.py: Failed to import matcha.models.components: {e}")
+    print(f"[ERROR] Please ensure matcha-tts is installed: pip install matcha-tts")
     raise
 
 class Transpose(torch.nn.Module):

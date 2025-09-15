@@ -29,10 +29,10 @@ def env_variables():
     current_working_dir = os.getcwd()
     main_root = os.path.realpath(os.path.join(current_working_dir, '../../'))
     bin_dir = os.path.join(main_root, 'inspiremusic')
-    third_party_matcha_tts_path = os.path.join(main_root, 'third_party', 'Matcha-TTS')
-    python_path = f"{main_root}:{bin_dir}:{third_party_matcha_tts_path}:{os.environ.get('PYTHONPATH', '')}"
+    # Use official matcha-tts package instead of local third_party directory
+    python_path = f"{main_root}:{bin_dir}:{os.environ.get('PYTHONPATH', '')}"
     os.environ['PYTHONPATH'] = python_path
-    sys.path.extend([main_root, third_party_matcha_tts_path])
+    sys.path.extend([main_root])
 
 class InspireMusicModel:
     def __init__(self,
@@ -67,45 +67,23 @@ class InspireMusicModel:
             model_dir = os.path.abspath(model_dir)
 
         # Check if model directory exists and contains required files
-        logging.info(f"[DEBUG] Checking model directory: {model_dir}")
-        logging.info(f"[DEBUG] Model directory exists: {os.path.isdir(model_dir)}")
-        logging.info(f"[DEBUG] Model directory is absolute: {os.path.isabs(model_dir)}")
         
         if os.path.isdir(model_dir) and os.path.isabs(model_dir):
             # Check if required files exist in the model directory
             # Note: tokenizer.model is not required for HuggingFace tokenizers
             required_files = ['llm.pt', 'flow.pt']
             optional_files = ['tokenizer.model', 'tokenizer.json', 'config.json']
-            logging.info(f"[DEBUG] Checking for required files: {required_files}")
-            logging.info(f"[DEBUG] Optional tokenizer files: {optional_files}")
-            
-            for file in required_files:
-                file_path = os.path.join(model_dir, file)
-                file_exists = os.path.exists(file_path)
-                logging.info(f"[DEBUG] Required file {file}: exists={file_exists}, path={file_path}")
-            
-            for file in optional_files:
-                file_path = os.path.join(model_dir, file)
-                file_exists = os.path.exists(file_path)
-                logging.info(f"[DEBUG] Optional file {file}: exists={file_exists}, path={file_path}")
             
             missing_files = [f for f in required_files if not os.path.exists(os.path.join(model_dir, f))]
             if missing_files:
-                logging.error(f"[DEBUG] Missing required files: {missing_files}")
-                # List all files in the model directory for debugging
-                try:
-                    all_files = os.listdir(model_dir)
-                    logging.info(f"[DEBUG] All files in model directory: {all_files}")
-                except Exception as e:
-                    logging.error(f"[DEBUG] Failed to list files in model directory: {e}")
+                logging.error(f"Missing required files: {missing_files}")
                 raise FileNotFoundError(f"Model directory {model_dir} exists but missing required files: {missing_files}")
             
             # Check if at least one tokenizer format is available
             tokenizer_formats = ['tokenizer.model', 'tokenizer.json']
             has_tokenizer = any(os.path.exists(os.path.join(model_dir, f)) for f in tokenizer_formats)
-            logging.info(f"[DEBUG] Has tokenizer files: {has_tokenizer}")
             if not has_tokenizer:
-                logging.warning(f"[DEBUG] No tokenizer files found, but continuing as HuggingFace AutoTokenizer may handle this")
+                logging.warning("No tokenizer files found, but continuing as HuggingFace AutoTokenizer may handle this")
         elif not os.path.isfile(os.path.join(model_dir, "llm.pt")):
             # Download model if directory doesn't exist or required files are missing
             if hub == "modelscope":
@@ -142,10 +120,8 @@ class InspireMusicModel:
         else:
             self.device = torch.device('cpu')
 
-        logging.info(f"[DEBUG] Initializing InspireMusic model with model_dir: {self.model_dir}")
-
         self.model = InspireMusic(self.model_dir, load_jit=load_jit, load_onnx=load_onnx, dtype=dtype, fast=fast, fp16=fp16)
-        logging.info(f"[DEBUG] InspireMusic model initialized successfully")
+        logging.info("InspireMusic model initialized successfully")
 
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

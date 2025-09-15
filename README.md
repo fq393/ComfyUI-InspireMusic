@@ -23,6 +23,18 @@ ComfyUI-InspireMusic/
 │   ├── audio_utils.py       # 音频处理工具
 │   └── model_manager.py     # 模型管理器
 ├── inspiremusic/           # InspireMusic核心库
+│   ├── cli/                 # 命令行接口
+│   ├── dataset/             # 数据集处理
+│   ├── flow/                # 流匹配模块
+│   ├── hifigan/             # HiFiGAN声码器
+│   ├── llm/                 # 大语言模型
+│   ├── metrics/             # 评估指标
+│   ├── music_tokenizer/     # 音乐分词器
+│   ├── text/                # 文本处理
+│   ├── transformer/         # Transformer模块
+│   ├── utils/               # 工具函数
+│   └── wavtokenizer/        # 波形分词器
+├── example/                 # 配置示例
 └── requirements.txt        # 依赖列表
 ```
 
@@ -48,15 +60,18 @@ cd ComfyUI-InspireMusic
 pip install -r requirements.txt
 ```
 
+   > **注意**: 依赖包含了 `matcha-tts`，这是解决 Matcha-TTS 模块导入问题的关键依赖。
+
 3. **下载模型**
 ```bash
-mkdir -p pretrained_models
+# 创建ComfyUI模型目录
+mkdir -p ComfyUI/models/InspireMusic
 
 # 从ModelScope下载
-git clone https://www.modelscope.cn/iic/InspireMusic-1.5B-Long.git pretrained_models/InspireMusic-1.5B-Long
+git clone https://www.modelscope.cn/iic/InspireMusic-1.5B-Long.git ComfyUI/models/InspireMusic/InspireMusic-1.5B-Long
 
 # 或从HuggingFace下载
-git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git pretrained_models/InspireMusic-1.5B-Long
+git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/models/InspireMusic/InspireMusic-1.5B-Long
 ```
 
 4. **重启ComfyUI**
@@ -138,12 +153,12 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git pretrain
 
 **ModelScope (推荐)**
 ```bash
-git clone https://www.modelscope.cn/iic/InspireMusic-1.5B-Long.git pretrained_models/InspireMusic-1.5B-Long
+git clone https://www.modelscope.cn/iic/InspireMusic-1.5B-Long.git ComfyUI/models/InspireMusic/InspireMusic-1.5B-Long
 ```
 
 **HuggingFace**
 ```bash
-git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git pretrained_models/InspireMusic-1.5B-Long
+git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/models/InspireMusic/InspireMusic-1.5B-Long
 ```
 
 ## 开发计划
