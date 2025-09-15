@@ -154,6 +154,10 @@ class InspireMusicTextToMusicNode:
         """Generate music using InspireMusic"""
         
         try:
+            # Validate required parameters for continuation mode
+            if task_type == "continuation" and audio_prompt is None:
+                raise ValueError("Audio prompt is required for continuation mode. Please provide an audio input.")
+            
             # Set seed if provided
             if seed != -1:
                 torch.manual_seed(seed)
