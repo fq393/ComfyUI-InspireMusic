@@ -137,8 +137,7 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/
 | text_prompt | STRING | "A captivating classical piano performance..." | 音乐描述文本，支持多行输入 |
 | model_name | COMBO | "InspireMusic-1.5B-Long" | 模型选择：InspireMusic-1.5B-Long, InspireMusic-1.5B, InspireMusic-Base等 |
 | task_type | COMBO | "text-to-music" | 任务类型：text-to-music（文本生成音乐）或 continuation（音乐续写） |
-| duration_min | FLOAT | 5.0 | 最小生成时长（秒），范围：1.0-30.0 |
-| duration_max | FLOAT | 30.0 | 最大生成时长（秒），范围：5.0-180.0 |
+| duration | FLOAT | 30.0 | 生成时长（秒），范围：5.0-180.0 |
 | output_sample_rate | COMBO | 48000 | 输出采样率：24000 或 48000 Hz |
 | chorus_mode | COMBO | "default" | 音乐结构模式：default, random, verse, chorus, intro, outro |
 | fast_mode | BOOLEAN | False | 快速模式（速度优先）或高质量模式 |

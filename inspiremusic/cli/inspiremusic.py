@@ -339,7 +339,7 @@ class InspireMusic:
             if text is None:
                 if audio is not None:
                     for i in tqdm(audio):
-                        model_input = self.frontend.frontend_continuation(None, i, time_start, time_end, chorus, sr, max_audio_length)
+                        model_input = self.frontend.frontend_continuation(None, i, time_start, time_end, chorus, sr)
                         start_time = time.time()
                         logging.info('prompt text {}'.format(i))
                         for model_output in self.model.continuation_inference(**model_input, stream=stream):
@@ -350,7 +350,7 @@ class InspireMusic:
             else:
                 if audio is not None:
                     for i in tqdm(self.frontend.text_normalize(text, split=True)):
-                        model_input = self.frontend.frontend_continuation(i, audio, time_start, time_end, chorus, sr, max_audio_length)
+                        model_input = self.frontend.frontend_continuation(i, audio, time_start, time_end, chorus, sr)
                         start_time = time.time()
                         logging.info('prompt text {}'.format(i))
                         for model_output in self.model.continuation_inference(**model_input, stream=stream):

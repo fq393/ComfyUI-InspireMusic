@@ -41,14 +41,8 @@ class InspireMusicTextToMusicNode:
                 "task_type": (["text-to-music", "continuation"], {
                     "default": "text-to-music"
                 }),
-                "duration_min": ("FLOAT", {
-                    "default": 5.0,
-                    "min": 1.0,
-                    "max": 30.0,
-                    "step": 0.5
-                }),
-                "duration_max": ("FLOAT", {
-                    "default": 60.0,
+                "duration": ("FLOAT", {
+                    "default": 30.0,
                     "min": 5.0,
                     "max": 180.0,
                     "step": 1.0
@@ -152,7 +146,7 @@ class InspireMusicTextToMusicNode:
         return None
     
     def generate_music(self, text_prompt: str, model_name: str, task_type: str,
-                      duration_min: float, duration_max: float, output_sample_rate: int,
+                      duration: float, output_sample_rate: int,
                       chorus_mode: str, fast_mode: bool, fade_out: bool,
                       fade_out_duration: float, trim_silence: bool,
                       audio_prompt=None, seed: int = -1):
@@ -173,7 +167,7 @@ class InspireMusicTextToMusicNode:
                 audio_prompt_path = self._prepare_audio_prompt(audio_prompt, output_sample_rate)
             
             # Set generation parameters
-            time_end = duration_max
+            time_end = duration
             
             # Generate music using the CLI interface
             output_file = model.inference(
