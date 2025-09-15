@@ -135,15 +135,8 @@ class InspireMusic:
             else:
                 logging.info(f"[DEBUG] generator_path is already absolute: {original_generator_path}")
         
-        # Update get_tokenizer configuration to use the corrected path
-        if 'get_tokenizer' in configs and hasattr(configs['get_tokenizer'], 'keywords'):
-            if 'tokenizer_path' in configs['get_tokenizer'].keywords:
-                original_tokenizer_path = configs['get_tokenizer'].keywords['tokenizer_path']
-                logging.info(f"[DEBUG] Original tokenizer_path: {original_tokenizer_path}")
-                
-                # Update tokenizer path to use model_dir
-                configs['get_tokenizer'].keywords['tokenizer_path'] = model_dir
-                logging.info(f"[DEBUG] Updated tokenizer_path to: {model_dir}")
+        # get_tokenizer 已经通过 functools.partial 正确配置了参数
+        logging.info(f"[DEBUG] get_tokenizer configured with tokenizer_path: {model_dir}")
 
         # Log tokenizer configuration
         if 'get_tokenizer' in configs:
@@ -267,15 +260,13 @@ class InspireMusic:
             'allowed_special': 'all'
         }
         
-        # 创建 get_tokenizer 函数对象
-        class TokenizerConfig:
-            def __init__(self, tokenizer_path, tokenizer_name):
-                self.keywords = {
-                    'tokenizer_path': tokenizer_path,
-                    'tokenizer_name': tokenizer_name
-                }
-        
-        configs['get_tokenizer'] = TokenizerConfig(model_dir, 'qwen-2.5')
+        # 设置 get_tokenizer 函数，使用 functools.partial 来预设参数
+        import functools
+        configs['get_tokenizer'] = functools.partial(
+            get_tokenizer,
+            tokenizer_path=model_dir,
+            tokenizer_name='qwen-2.5'
+        )
         
         logging.info(f"[DEBUG] Created default config with basemodel_path: {configs['basemodel_path']}")
         logging.info(f"[DEBUG] Created default config with generator_path: {configs['generator_path']}")
