@@ -200,6 +200,47 @@ class InspireMusic:
         from inspiremusic.flow.flow import MaskedDiff
         from inspiremusic.hifigan.generator import HiFTGenerator
         
+        # 创建实际的模型对象
+        llm_config = {
+            'text_encoder_input_size': 512,
+            'llm_input_size': 1536,
+            'llm_output_size': 1536,
+            'audio_token_size': 4096,
+            'length_normalized_loss': True,
+            'lsm_weight': 0,
+            'text_encoder_conf': {'name': 'none'},
+            'train_cfg_ratio': 0.2,
+            'infer_cfg_ratio': 3.0
+        }
+        
+        flow_config = {
+            'input_size': 256,
+            'output_size': 80,
+            'output_type': 'mel',
+            'vocab_size': 4096,
+            'input_frame_rate': 75,
+            'only_mask_loss': True,
+            'generator_model_dir': os.path.join(model_dir, 'music_tokenizer')
+        }
+        
+        hift_config = {
+            'in_channels': 80,
+            'base_channels': 512,
+            'nb_harmonics': 8,
+            'sampling_rate': 24000,
+            'nsf_alpha': 0.1,
+            'nsf_sigma': 0.003,
+            'nsf_voiced_threshold': 10,
+            'upsample_rates': [8, 8],
+            'upsample_kernel_sizes': [16, 16],
+            'resblock_kernel_sizes': [3, 7, 11],
+            'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]],
+            'source_resblock_kernel_sizes': [7, 11],
+            'source_resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5]],
+            'lrelu_slope': 0.1,
+            'audio_limit': 0.99
+        }
+        
         # 创建默认配置字典
         configs = {
             # 基础参数
@@ -210,51 +251,11 @@ class InspireMusic:
             'basemodel_path': model_dir,
             'generator_path': os.path.join(model_dir, 'music_tokenizer'),
             
-            # LLM 配置
-            'llm': {
-                'text_encoder_input_size': 512,
-                'llm_input_size': 1536,
-                'llm_output_size': 1536,
-                'audio_token_size': 4096,
-                'length_normalized_loss': True,
-                'lsm_weight': 0,
-                'text_encoder_conf': {'name': 'none'},
-                'train_cfg_ratio': 0.2,
-                'infer_cfg_ratio': 3.0
-            },
-            
-            # Flow 配置
-            'flow': {
-                'input_size': 256,
-                'output_size': 80,
-                'output_type': 'mel',
-                'vocab_size': 4096,
-                'input_frame_rate': 75,
-                'only_mask_loss': True,
-                'generator_model_dir': os.path.join(model_dir, 'music_tokenizer')
-            },
-            
-            # HiFT 配置
-            'hift': {
-                'in_channels': 80,
-                'base_channels': 512,
-                'nb_harmonics': 8,
-                'sampling_rate': 24000,
-                'nsf_alpha': 0.1,
-                'nsf_sigma': 0.003,
-                'nsf_voiced_threshold': 10,
-                'upsample_rates': [8, 8],
-                'upsample_kernel_sizes': [16, 16],
-                'resblock_kernel_sizes': [3, 7, 11],
-                'resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5], [1, 3, 5]],
-                'source_resblock_kernel_sizes': [7, 11],
-                'source_resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5]],
-                'lrelu_slope': 0.1,
-                'audio_limit': 0.99
-            },
-            
-            # WavTokenizer 配置
-            'wavtokenizer': {},
+            # 创建实际的模型对象
+            'llm': LLM(**llm_config),
+            'flow': MaskedDiff(**flow_config),
+            'hift': HiFTGenerator(**hift_config),
+            'wavtokenizer': {},  # WavTokenizer 将在后续加载
             
             # Tokenizer 配置
             'allowed_special': 'all'
