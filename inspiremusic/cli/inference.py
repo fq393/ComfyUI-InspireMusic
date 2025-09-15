@@ -18,6 +18,7 @@ import torchaudio
 import time
 import logging
 import argparse
+from datetime import datetime
 from inspiremusic.cli.inspiremusic import InspireMusic
 from inspiremusic.utils.file_utils import logging
 import torch
@@ -151,7 +152,9 @@ class InspireMusicModel:
             time_start_tensor = torch.tensor([time_start], dtype=torch.float64).to(self.device)
             time_end_tensor = torch.tensor([time_end], dtype=torch.float64).to(self.device)
 
-            music_fn = os.path.join(self.result_dir, f'{output_fn}.{output_format}')
+            # Add millisecond timestamp to avoid filename conflicts
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Remove last 3 digits to get milliseconds
+            music_fn = os.path.join(self.result_dir, f'{output_fn}_{timestamp}.{output_format}')
 
             bench_start = time.time()
 
