@@ -16,6 +16,11 @@ import sys
 import time
 from tqdm import tqdm
 
+# Add Matcha-TTS to Python path
+matcha_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'Matcha-TTS')
+if os.path.exists(matcha_path) and matcha_path not in sys.path:
+    sys.path.insert(0, matcha_path)
+
 from inspiremusic.cli.frontend import InspireMusicFrontEnd
 from inspiremusic.cli.model import InspireMusicModel
 from inspiremusic.utils.file_utils import logging
@@ -171,6 +176,52 @@ class InspireMusic:
         from inspiremusic.utils.common import topk_sampling
         from omegaconf import DictConfig
         import functools
+        import torch
+        from librosa.filters import mel as librosa_mel_fn
+        
+        # 定义 mel_spectrogram 函数
+        def mel_spectrogram(y, n_fft, num_mels, sampling_rate, hop_size, win_size, fmin, fmax, center=False):
+            """Mel spectrogram function from matcha.utils.audio"""
+            mel_basis = {}
+            hann_window = {}
+            
+            if torch.min(y) < -1.0:
+                print("min value is ", torch.min(y))
+            if torch.max(y) > 1.0:
+                print("max value is ", torch.max(y))
+
+            if f"{str(fmax)}_{str(y.device)}" not in mel_basis:
+                mel = librosa_mel_fn(sr=sampling_rate, n_fft=n_fft, n_mels=num_mels, fmin=fmin, fmax=fmax)
+                mel_basis[str(fmax) + "_" + str(y.device)] = torch.from_numpy(mel).float().to(y.device)
+                hann_window[str(y.device)] = torch.hann_window(win_size).to(y.device)
+
+            y = torch.nn.functional.pad(
+                y.unsqueeze(1), (int((n_fft - hop_size) / 2), int((n_fft - hop_size) / 2)), mode="reflect"
+            )
+            y = y.squeeze(1)
+
+            spec = torch.view_as_real(
+                torch.stft(
+                    y,
+                    n_fft,
+                    hop_length=hop_size,
+                    win_length=win_size,
+                    window=hann_window[str(y.device)],
+                    center=center,
+                    pad_mode="reflect",
+                    normalized=False,
+                    onesided=True,
+                    return_complex=True,
+                )
+            )
+
+            spec = torch.sqrt(spec.pow(2).sum(-1) + (1e-9))
+            spec = torch.matmul(mel_basis[str(fmax) + "_" + str(y.device)], spec)
+            
+            # spectral_normalize_torch
+            spec = torch.log(torch.clamp(spec, min=1e-5) * 1)
+            
+            return spec
         
         # 创建 QwenEmbeddingEncoder
         qwen_encoder = QwenEmbeddingEncoder(
@@ -305,7 +356,10 @@ class InspireMusic:
             'wavtokenizer': {},  # WavTokenizer 将在后续加载
             
             # Tokenizer 配置
-            'allowed_special': 'all'
+            'allowed_special': 'all',
+            
+            # 添加 mel_spectrogram 函数
+            'mel_spectrogram': mel_spectrogram
         }
         
         # 设置 get_tokenizer 函数，使用 functools.partial 来预设参数
