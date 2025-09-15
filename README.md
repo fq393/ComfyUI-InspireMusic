@@ -212,10 +212,8 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/
 - ✅ 基础文本到音乐生成功能
 - ✅ 模块化架构设计
 - ✅ 多模型支持
-- 🔄 音乐续写功能 (开发中)
+- ✅ 音乐续写功能
 - 📋 批量生成功能
-- 📋 更多音频格式支持
-- 📋 自定义模型路径配置
 
 ## 贡献
 

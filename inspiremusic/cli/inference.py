@@ -164,7 +164,7 @@ class InspireMusicModel:
                     "chorus"         : chorus,
                     "task"           : task,
                     "stream"         : False,
-                    "duration_to_gen": min(time_end, self.max_generate_audio_seconds),
+                    "duration_to_gen": time_end,
                     "sr"             : self.sample_rate
                 }
             elif task == 'continuation':
@@ -185,7 +185,7 @@ class InspireMusicModel:
                     "chorus"         : chorus,
                     "task"           : task,
                     "stream"         : False,
-                    "duration_to_gen": min(time_end, self.max_generate_audio_seconds),
+                    "duration_to_gen": time_end,
                     "sr"             : self.sample_rate
                 }
 
@@ -204,8 +204,10 @@ class InspireMusicModel:
                 music_audio = music_audios[0]
 
             if music_audio.shape[0] != 0:
-                if music_audio.shape[1] > self.max_generate_audio_length:
-                    music_audio = music_audio[:, :self.max_generate_audio_length]
+                # Calculate the target length based on time_end instead of max_generate_audio_length
+                target_length = int(self.output_sample_rate * time_end)
+                if music_audio.shape[1] > target_length:
+                    music_audio = music_audio[:, :target_length]
 
                 if music_audio.shape[1] >= self.min_generate_audio_length:
                     try:
