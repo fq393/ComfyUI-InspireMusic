@@ -4,6 +4,8 @@
 
 基于阿里巴巴InspireMusic模型的ComfyUI节点插件，支持文本到音乐生成和音乐续写功能。
 
+模型详情：https://modelscope.cn/models/iic/InspireMusic-1.5B-Long/summary
+
 ## 特性
 - 🎵 文本到音乐生成 (Text-to-Music)
 - 🎼 音乐续写 (Music Continuation) 
@@ -109,15 +111,28 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/
 
 ### 节点参数说明
 
+#### 必需参数
+
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| text_prompt | STRING | "" | 音乐描述文本 |
-| model_name | COMBO | "InspireMusic-1.5B-Long" | 模型名称 |
-| duration | FLOAT | 30.0 | 生成时长(秒) |
-| fast_mode | BOOLEAN | False | 快速模式 |
-| apply_fade_out | BOOLEAN | True | 应用淡出效果 |
-| trim_silence | BOOLEAN | True | 修剪静音 |
-| output_sample_rate | INT | 48000 | 输出采样率 |
+| text_prompt | STRING | "A captivating classical piano performance..." | 音乐描述文本，支持多行输入 |
+| model_name | COMBO | "InspireMusic-1.5B-Long" | 模型选择：InspireMusic-1.5B-Long, InspireMusic-1.5B, InspireMusic-Base等 |
+| task_type | COMBO | "text-to-music" | 任务类型：text-to-music（文本生成音乐）或 continuation（音乐续写） |
+| duration_min | FLOAT | 5.0 | 最小生成时长（秒），范围：1.0-30.0 |
+| duration_max | FLOAT | 30.0 | 最大生成时长（秒），范围：5.0-180.0 |
+| output_sample_rate | COMBO | 48000 | 输出采样率：24000 或 48000 Hz |
+| chorus_mode | COMBO | "default" | 音乐结构模式：default, random, verse, chorus, intro, outro |
+| fast_mode | BOOLEAN | False | 快速模式（速度优先）或高质量模式 |
+| fade_out | BOOLEAN | True | 是否应用淡出效果 |
+| fade_out_duration | FLOAT | 1.0 | 淡出时长（秒），范围：0.1-5.0 |
+| trim_silence | BOOLEAN | False | 是否修剪开头和结尾的静音 |
+
+#### 可选参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| audio_prompt | AUDIO | - | 音频提示（用于音乐续写任务） |
+| seed | INT | -1 | 随机种子，-1表示随机生成 |
 
 ## 故障排除
 

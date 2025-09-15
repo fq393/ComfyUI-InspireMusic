@@ -122,10 +122,10 @@ class InspireMusicTextToMusicNode:
                 
                 # Convert to numpy and save as temporary file
                 import tempfile
-                import soundfile as sf
                 
                 # Create temporary file
                 temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+                temp_file.close()
                 
                 # Convert tensor to numpy if needed
                 if torch.is_tensor(waveform):
@@ -133,9 +133,15 @@ class InspireMusicTextToMusicNode:
                 else:
                     audio_data = waveform
                 
-                # Save audio file
-                sf.write(temp_file.name, audio_data, sample_rate)
-                temp_file.close()
+                # Ensure audio_data is in correct format (channels, samples)
+                if audio_data.ndim == 1:
+                    audio_data = audio_data.reshape(1, -1)
+                elif audio_data.ndim == 3:  # (batch, channels, samples)
+                    audio_data = audio_data.squeeze(0)
+                
+                # Convert to tensor and save using torchaudio
+                audio_tensor = torch.from_numpy(audio_data).float()
+                torchaudio.save(temp_file.name, audio_tensor, sample_rate)
                 
                 return temp_file.name
                 
@@ -184,6 +190,7 @@ class InspireMusicTextToMusicNode:
             )
             
             # Load the generated audio file
+            generated_audio = None
             if output_file and os.path.exists(output_file):
                 generated_audio, _ = load_audio(output_file, target_sr=output_sample_rate)
                 generated_audio = generated_audio.squeeze(0)  # Remove channel dimension
@@ -195,6 +202,10 @@ class InspireMusicTextToMusicNode:
                     pass
             else:
                 raise RuntimeError("Failed to generate audio file")
+            
+            # Ensure generated_audio is not None
+            if generated_audio is None:
+                raise RuntimeError("Generated audio is None")
             
             # Clean up temporary audio prompt file
             if audio_prompt_path and os.path.exists(audio_prompt_path):
