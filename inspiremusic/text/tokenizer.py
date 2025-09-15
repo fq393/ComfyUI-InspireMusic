@@ -45,6 +45,15 @@ def get_tokenizer(tokenizer_name, tokenizer_path):
             logging.info(f"[DEBUG] tokenizer.model exists: {os.path.exists(tokenizer_model_path)}")
             logging.info(f"[DEBUG] tokenizer.json exists: {os.path.exists(tokenizer_json_path)}")
             logging.info(f"[DEBUG] config.json exists: {os.path.exists(config_json_path)}")
+            
+            # Check if at least one tokenizer format is available
+            has_sentencepiece = os.path.exists(tokenizer_model_path)
+            has_huggingface = os.path.exists(tokenizer_json_path) and os.path.exists(config_json_path)
+            logging.info(f"[DEBUG] Has SentencePiece tokenizer: {has_sentencepiece}")
+            logging.info(f"[DEBUG] Has HuggingFace tokenizer: {has_huggingface}")
+            
+            if not (has_sentencepiece or has_huggingface):
+                logging.warning(f"[DEBUG] No valid tokenizer format found, but AutoTokenizer may still work")
         except Exception as e:
             logging.error(f"[DEBUG] Failed to list tokenizer directory: {e}")
     

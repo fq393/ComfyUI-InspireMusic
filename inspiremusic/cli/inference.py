@@ -71,18 +71,26 @@ class InspireMusicModel:
         logging.info(f"[DEBUG] Model directory is absolute: {os.path.isabs(model_dir)}")
         
         if os.path.isdir(model_dir) and os.path.isabs(model_dir):
-            # For absolute paths that exist, check if required files are present
-            required_files = ["llm.pt", "flow.pt", "tokenizer.model"]
+            # Check if required files exist in the model directory
+            # Note: tokenizer.model is not required for HuggingFace tokenizers
+            required_files = ['llm.pt', 'flow.pt']
+            optional_files = ['tokenizer.model', 'tokenizer.json', 'config.json']
             logging.info(f"[DEBUG] Checking for required files: {required_files}")
+            logging.info(f"[DEBUG] Optional tokenizer files: {optional_files}")
             
             for file in required_files:
                 file_path = os.path.join(model_dir, file)
-                file_exists = os.path.isfile(file_path)
-                logging.info(f"[DEBUG] File {file}: exists={file_exists}, path={file_path}")
+                file_exists = os.path.exists(file_path)
+                logging.info(f"[DEBUG] Required file {file}: exists={file_exists}, path={file_path}")
             
-            missing_files = [f for f in required_files if not os.path.isfile(os.path.join(model_dir, f))]
+            for file in optional_files:
+                file_path = os.path.join(model_dir, file)
+                file_exists = os.path.exists(file_path)
+                logging.info(f"[DEBUG] Optional file {file}: exists={file_exists}, path={file_path}")
+            
+            missing_files = [f for f in required_files if not os.path.exists(os.path.join(model_dir, f))]
             if missing_files:
-                logging.error(f"[DEBUG] Missing files: {missing_files}")
+                logging.error(f"[DEBUG] Missing required files: {missing_files}")
                 # List all files in the model directory for debugging
                 try:
                     all_files = os.listdir(model_dir)
@@ -90,6 +98,13 @@ class InspireMusicModel:
                 except Exception as e:
                     logging.error(f"[DEBUG] Failed to list files in model directory: {e}")
                 raise FileNotFoundError(f"Model directory {model_dir} exists but missing required files: {missing_files}")
+            
+            # Check if at least one tokenizer format is available
+            tokenizer_formats = ['tokenizer.model', 'tokenizer.json']
+            has_tokenizer = any(os.path.exists(os.path.join(model_dir, f)) for f in tokenizer_formats)
+            logging.info(f"[DEBUG] Has tokenizer files: {has_tokenizer}")
+            if not has_tokenizer:
+                logging.warning(f"[DEBUG] No tokenizer files found, but continuing as HuggingFace AutoTokenizer may handle this")
         elif not os.path.isfile(os.path.join(model_dir, "llm.pt")):
             # Download model if directory doesn't exist or required files are missing
             if hub == "modelscope":

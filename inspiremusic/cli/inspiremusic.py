@@ -47,13 +47,21 @@ class InspireMusic:
                 logging.info(f"[DEBUG] Model directory is absolute and exists, checking required files")
                 # For server deployment, assume model files are already present
                 # Just check if required files exist
+                # Note: tokenizer.model is not required for HuggingFace tokenizers
                 required_files = ['llm.pt', 'flow.pt', 'inspiremusic.yaml']
+                optional_files = ['tokenizer.model', 'tokenizer.json', 'config.json']
                 logging.info(f"[DEBUG] Required files for InspireMusic: {required_files}")
+                logging.info(f"[DEBUG] Optional tokenizer files: {optional_files}")
                 
                 for file in required_files:
                     file_path = os.path.join(model_dir, file)
                     file_exists = os.path.exists(file_path)
-                    logging.info(f"[DEBUG] File {file}: exists={file_exists}, path={file_path}")
+                    logging.info(f"[DEBUG] Required file {file}: exists={file_exists}, path={file_path}")
+                
+                for file in optional_files:
+                    file_path = os.path.join(model_dir, file)
+                    file_exists = os.path.exists(file_path)
+                    logging.info(f"[DEBUG] Optional file {file}: exists={file_exists}, path={file_path}")
                 
                 missing_files = [f for f in required_files if not os.path.exists(os.path.join(model_dir, f))]
                 if missing_files:
@@ -65,6 +73,13 @@ class InspireMusic:
                     except Exception as e:
                         logging.error(f"[DEBUG] Failed to list files in InspireMusic model directory: {e}")
                     raise FileNotFoundError(f"Required model files missing in {model_dir}: {missing_files}")
+                
+                # Check if at least one tokenizer format is available
+                tokenizer_formats = ['tokenizer.model', 'tokenizer.json']
+                has_tokenizer = any(os.path.exists(os.path.join(model_dir, f)) for f in tokenizer_formats)
+                logging.info(f"[DEBUG] Has tokenizer files: {has_tokenizer}")
+                if not has_tokenizer:
+                    logging.warning(f"[DEBUG] No tokenizer files found, but continuing as HuggingFace AutoTokenizer may handle this")
             else:
                 logging.info(f"[DEBUG] Attempting to download model {model_name}")
                 # Download model for local/relative paths
