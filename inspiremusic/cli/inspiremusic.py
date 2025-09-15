@@ -200,12 +200,94 @@ class InspireMusic:
         from inspiremusic.flow.flow import MaskedDiff
         from inspiremusic.hifigan.generator import HiFTGenerator
         
+        # 导入必要的模块
+        from inspiremusic.transformer.qwen_encoder import QwenEmbeddingEncoder
+        from inspiremusic.transformer.encoder import ConformerEncoder
+        from inspiremusic.flow.length_regulator import InterpolateRegulator
+        from inspiremusic.flow.flow_matching import ConditionalCFM
+        from inspiremusic.flow.decoder import ConditionalDecoder
+        from inspiremusic.hifigan.f0_predictor import ConvRNNF0Predictor
+        from inspiremusic.utils.common import topk_sampling
+        from omegaconf import DictConfig
+        import functools
+        
+        # 创建 QwenEmbeddingEncoder
+        qwen_encoder = QwenEmbeddingEncoder(
+            input_size=512,
+            pretrain_path=model_dir
+        )
+        
+        # 创建 sampling 函数
+        sampling_func = functools.partial(topk_sampling, top_k=350)
+        
+        # 创建 ConformerEncoder
+        conformer_encoder = ConformerEncoder(
+            output_size=512,
+            attention_heads=4,
+            linear_units=1024,
+            num_blocks=3,
+            dropout_rate=0.1,
+            positional_dropout_rate=0.1,
+            attention_dropout_rate=0.1,
+            normalize_before=True,
+            input_layer='linear',
+            pos_enc_layer_type='rel_pos_espnet',
+            selfattention_layer_type='rel_selfattn',
+            input_size=256,
+            use_cnn_module=False,
+            macaron_style=False
+        )
+        
+        # 创建 InterpolateRegulator
+        length_regulator = InterpolateRegulator(
+            channels=512,
+            sampling_ratios=[1, 1, 1, 1]
+        )
+        
+        # 创建 ConditionalDecoder
+        conditional_decoder = ConditionalDecoder(
+            in_channels=1024,
+            out_channels=512,
+            channels=[256, 256],
+            dropout=0.0,
+            attention_head_dim=64,
+            n_blocks=4,
+            num_mid_blocks=8,
+            num_heads=8,
+            act_fn='gelu'
+        )
+        
+        # 创建 ConditionalCFM
+        cfm_params = DictConfig({
+            'sigma_min': 1e-06,
+            'solver': 'euler',
+            't_scheduler': 'cosine',
+            'training_cfg_rate': 0.2,
+            'inference_cfg_rate': 0.7,
+            'reg_loss_type': 'l1'
+        })
+        
+        conditional_cfm = ConditionalCFM(
+            in_channels=240,
+            cfm_params=cfm_params,
+            estimator=conditional_decoder
+        )
+        
+        # 创建 ConvRNNF0Predictor
+        f0_predictor = ConvRNNF0Predictor(
+            num_class=1,
+            in_channels=80,
+            cond_channels=512
+        )
+        
         # 创建实际的模型对象
         llm_config = {
             'text_encoder_input_size': 512,
             'llm_input_size': 1536,
             'llm_output_size': 1536,
             'audio_token_size': 4096,
+            'llm': qwen_encoder,
+            'sampling': sampling_func,
             'length_normalized_loss': True,
             'lsm_weight': 0,
             'text_encoder_conf': {'name': 'none'},
@@ -220,6 +302,9 @@ class InspireMusic:
             'vocab_size': 4096,
             'input_frame_rate': 75,
             'only_mask_loss': True,
+            'encoder': conformer_encoder,
+            'length_regulator': length_regulator,
+            'decoder': conditional_cfm,
             'generator_model_dir': os.path.join(model_dir, 'music_tokenizer')
         }
         
@@ -238,7 +323,8 @@ class InspireMusic:
             'source_resblock_kernel_sizes': [7, 11],
             'source_resblock_dilation_sizes': [[1, 3, 5], [1, 3, 5]],
             'lrelu_slope': 0.1,
-            'audio_limit': 0.99
+            'audio_limit': 0.99,
+            'f0_predictor': f0_predictor
         }
         
         # 创建默认配置字典

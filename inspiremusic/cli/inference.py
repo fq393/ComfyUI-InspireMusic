@@ -52,7 +52,7 @@ class InspireMusicModel:
                  hub="modelscope",
                  repo_url=None,
                  token=None,
-                 use_config_file: bool = False):
+                 use_config_file: bool = True):
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
 
         # Set model_dir or default to downloading if it doesn't exist
