@@ -258,7 +258,8 @@ class InspireMusicModelManager:
                 model_dir=model_path,
                 output_sample_rate=output_sample_rate,
                 fast=fast_mode,
-                gpu=0 if self.device == 'cuda' else -1
+                gpu=0 if self.device == 'cuda' else -1,
+                max_generate_audio_seconds=180.0  # Allow up to 180 seconds generation
             )
             
             # Cache the loaded model
