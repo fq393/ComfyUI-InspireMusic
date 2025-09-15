@@ -46,7 +46,7 @@ ComfyUI-InspireMusic/
 - Python >= 3.8
 - PyTorch >= 2.0.1
 - ComfyUI
-- CUDA >= 11.8 (可选，用于GPU加速)
+- CUDA >= 11.8
 
 ### 安装步骤
 
@@ -59,10 +59,17 @@ cd ComfyUI-InspireMusic
 
 2. **安装依赖**
 ```bash
+# 安装核心依赖（推荐按需安装）
+pip install matcha-tts
+
+# 或者安装全部依赖
 pip install -r requirements.txt
 ```
 
-   > **注意**: 依赖包含了 `matcha-tts`，这是解决 Matcha-TTS 模块导入问题的关键依赖。
+   > **注意**: 
+   > - 核心依赖只需要安装 `matcha-tts`，这是解决 Matcha-TTS 模块导入问题的关键依赖
+   > - 其他依赖可以按需安装，运行时缺什么安装什么即可
+   > - 如果遇到依赖冲突，建议使用虚拟环境
 
 3. **下载模型**
 ```bash
@@ -83,13 +90,25 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/
 
 ### 文本到音乐生成
 ```
+输入文本: "A captivating classical piano performance with dynamic and intense atmosphere."
+输出: 30秒的古典钢琴音频文件
+
 输入文本: "Experience soothing and sensual instrumental jazz with a touch of Bossa Nova, perfect for a relaxing restaurant or spa ambiance."
 输出: 30秒的爵士乐音频文件
+
+输入文本: "Upbeat electronic dance music with heavy bass and energetic synthesizer melodies."
+输出: 30秒的电子舞曲音频文件
 ```
 
 ### 音乐续写
 ```
-输入: 音频文件 + 文本描述
+输入: 音频文件 + "Continue this melody with a more dramatic and orchestral arrangement."
+输出: 续写的音乐片段
+
+输入: 音频文件 + "Extend this track with a guitar solo and rock elements."
+输出: 续写的音乐片段
+
+输入: 音频文件 + "Add ambient textures and ethereal vocals to create a dreamy atmosphere."
 输出: 续写的音乐片段
 ```
 

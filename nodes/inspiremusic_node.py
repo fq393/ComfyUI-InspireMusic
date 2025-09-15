@@ -48,7 +48,7 @@ class InspireMusicTextToMusicNode:
                     "step": 0.5
                 }),
                 "duration_max": ("FLOAT", {
-                    "default": 30.0,
+                    "default": 60.0,
                     "min": 5.0,
                     "max": 180.0,
                     "step": 1.0
@@ -173,7 +173,7 @@ class InspireMusicTextToMusicNode:
                 audio_prompt_path = self._prepare_audio_prompt(audio_prompt, output_sample_rate)
             
             # Set generation parameters
-            time_end = min(duration_max, max(duration_min, duration_max))
+            time_end = duration_max
             
             # Generate music using the CLI interface
             output_file = model.inference(
