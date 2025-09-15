@@ -23,7 +23,7 @@ from inspiremusic.utils.utils import download_model
 import torch
 
 class InspireMusic:
-    def __init__(self, model_dir, load_jit=True, load_onnx=False, dtype = "fp16", fast = False, fp16=True, hub="modelscope", repo_url=None, token=None, use_config_file=True):
+    def __init__(self, model_dir, load_jit=True, load_onnx=False, dtype = "fp16", fast = False, fp16=True, hub="modelscope", repo_url=None, token=None, use_config_file=False):
         instruct = True if '-Instruct' in model_dir else False
 
         if model_dir is None:
