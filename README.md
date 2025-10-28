@@ -4,8 +4,6 @@
 
 基于阿里巴巴InspireMusic模型的ComfyUI节点插件，支持文本到音乐生成和音乐续写功能。
 
-模型详情：https://modelscope.cn/models/iic/InspireMusic-1.5B-Long/summary
-
 ## 特性
 - 🎵 文本到音乐生成 (Text-to-Music)
 - 🎼 音乐续写 (Music Continuation) 
