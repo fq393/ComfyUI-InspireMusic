@@ -356,7 +356,13 @@ class LLM(torch.nn.Module):
         state = None
 
         for i in range(int(max_len)):
-            y_pred, _, state = self.llm.forward_one_step(lm_input.to(self.dtype), torch.ones(lm_input.shape[0], lm_input.shape[1], device=lm_input.device).to(torch.bool), cache=state)
+            # Check if lm_input is empty to prevent flash attention errors
+            if lm_input.numel() == 0:
+                logging.warning("Empty lm_input detected, skipping inference step")
+                break
+                
+            attention_mask = torch.ones(lm_input.shape[0], lm_input.shape[1], device=lm_input.device).to(torch.bool)
+            y_pred, _, state = self.llm.forward_one_step(lm_input.to(self.dtype), attention_mask, cache=state)
             logits = self.llm_decoder(y_pred[:, -1])
             if infer_cfg:
                 # perform context free guidance

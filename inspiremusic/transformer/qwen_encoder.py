@@ -132,7 +132,20 @@ class QwenEmbeddingEncoder(nn.Module):
         return outs.hidden_states[-1], input_masks
 
     def forward_one_step(self, xs, masks, cache=None):
-
+        # Add input validation to prevent flash attention errors
+        if xs.numel() == 0 or masks.numel() == 0:
+            # Return empty tensors with proper shapes if input is empty
+            batch_size, seq_len = xs.shape[:2] if xs.numel() > 0 else (1, 0)
+            empty_output = torch.zeros(batch_size, seq_len, self._output_size, 
+                                     device=xs.device, dtype=xs.dtype)
+            empty_masks = torch.zeros(batch_size, seq_len, device=masks.device, dtype=masks.dtype)
+            return empty_output, empty_masks, cache
+        
+        # Ensure masks have proper shape and values
+        if masks.dim() == 3 and masks.size(1) == 1:
+            # Convert from (batch, 1, seq_len) to (batch, seq_len)
+            masks = masks.squeeze(1)
+        
         outs = self.model(
             inputs_embeds=xs,
             attention_mask=masks,

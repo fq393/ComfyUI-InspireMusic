@@ -272,6 +272,8 @@ class InspireMusicModel:
                         this_music_token = torch.concat(self.music_token_dict[this_uuid], dim=1)
                     else:
                         print(f"The list of tensors is empty for UUID: {this_uuid}")
+                        # Use text_token as fallback when no music tokens are generated
+                        this_music_token = text_token
                 else:
                     this_music_token = text_token
                 logging.info(f"LLM generated audio token length: {this_music_token.shape[1]}")
