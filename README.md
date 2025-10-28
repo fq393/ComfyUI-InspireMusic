@@ -89,6 +89,8 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/
 ## 使用示例
 
 ### 文本到音乐生成
+
+#### 标准文本输入示例
 ```
 输入文本: "A captivating classical piano performance with dynamic and intense atmosphere."
 输出: 30秒的古典钢琴音频文件
@@ -99,6 +101,26 @@ git clone https://huggingface.co/FunAudioLLM/InspireMusic-1.5B-Long.git ComfyUI/
 输入文本: "Upbeat electronic dance music with heavy bass and energetic synthesizer melodies."
 输出: 30秒的电子舞曲音频文件
 ```
+
+#### 高级Prompt格式示例（官方格式）
+```
+<|30.0|><|verse|><|Experience soothing and sensual instrumental jazz with a touch of Bossa Nova, perfect for a relaxing restaurant or spa ambiance.|><|60.0|>
+输出: 从30秒开始生成30秒的爵士乐（verse段落）
+
+<|0.0|><|intro|><|A delightful collection of classical keyboard music, purely instrumental, exuding a timeless and elegant charm.|><|30.0|>
+输出: 从0秒开始生成30秒的古典键盘音乐（intro段落）
+
+<|120.0|><|chorus|><|The instrumental rap track exudes a classic boom bap vibe, characterized by its French hip-hop roots and a smooth, rhythmic flow.|><|150.0|>
+输出: 从120秒开始生成30秒的说唱音乐（chorus段落）
+
+<|300.0|><|outro|><|The music exudes a vibrant and sophisticated jazz ambiance, characterized by the rich, dynamic sounds of a big band ensemble. With instrumental purity and a touch of classical influence, it offers a captivating listening experience.|><|330.0|>
+输出: 从300秒开始生成30秒的大乐队爵士音乐（outro段落）
+```
+
+**Prompt格式说明:**
+- `<|开始时间|><|段落类型|><|音乐描述|><|结束时间|>`
+- 段落类型: `intro`(前奏), `verse`(主歌), `chorus`(副歌), `outro`(尾奏)
+- 时间单位: 秒
 
 ### 音乐续写
 ```
